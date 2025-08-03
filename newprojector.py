@@ -126,6 +126,8 @@ def display_verse():
                 verse_window = tk.Toplevel(root)
                 verse_window.title("Verse Display")
                 verse_window.geometry("800x500")
+                verse_window.bind('<Left>', lambda event: prev_verse())
+                verse_window.bind('<Right>', lambda event: next_verse())
                 verse_label_widget = ttk.Label(verse_window, text=f"{book} {chapter}:{verse}", font=('Noto Sans Malayalam', 18, 'bold'))
                 verse_label_widget.pack(pady=(10, 0))
                 text_box = tk.Text(verse_window, wrap=tk.WORD, font=('Noto Sans Malayalam', 49,'bold'), spacing3=10, height=10)
