@@ -72,6 +72,8 @@ root = tk.Tk()
 root.title("Bible Verse Navigator")
 root.geometry('1000x700')
 root.minsize(700, 400)
+style = ttk.Style()
+style.configure("Small.TButton", font=("TkDefaultFont", 8))
 
 book_selected = tk.StringVar()
 chapter_selected = tk.StringVar()
@@ -130,8 +132,8 @@ def display_verse():
                 text_box.pack(fill='both', expand=True, padx=10, pady=10)
                 btn_frame = ttk.Frame(verse_window)
                 btn_frame.pack(pady=5)
-                ttk.Button(btn_frame, text="Previous", command=prev_verse).pack(side='left', padx=5)
-                ttk.Button(btn_frame, text="Next", command=next_verse).pack(side='left', padx=5)
+                ttk.Button(btn_frame, text="Previous", command=prev_verse, style="Small.TButton").pack(side='left', padx=5)
+                ttk.Button(btn_frame, text="Next", command=next_verse, style="Small.TButton").pack(side='left', padx=5)
             
             else:
                 verse_window.deiconify()
