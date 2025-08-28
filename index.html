@@ -4,65 +4,53 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bible Verse Navigator</title>
-
-  <!-- Malayalam font (also used by presentation) -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
-
   <style>
-    /* Dark theme to match presentation.html */
+    /* THEME VARIABLES */
     :root{
-      --bg:#0b1324;
-      --panel:#0e172b;
-      --border:#22335a;
-      --text:#f5f7fb;
-      --muted:#9aa4b2;
-      --btn-bg:#0e1527;
-      --btn-hover:#101a33;
-      --btn-border:#22335a;
+      /* Light (default) */
+      --bg:#f5f6f7; --panel:#ffffff; --border:#d6d8db; --text:#111827; --muted:#6b7280;
+      --btn-bg:#ffffff; --btn-hover:#f0f2f5; --btn-border:#c9ccd1;
       --accent:#0ea5e9;
     }
+    body.dark{
+      /* Dark (matches presentation) */
+      --bg:#0b1324; --panel:#0e172b; --border:#22335a; --text:#f5f7fb; --muted:#9aa4b2;
+      --btn-bg:#0e1527; --btn-hover:#101a33; --btn-border:#22335a;
+      --accent:#0ea5e9;
+    }
+
     *{ box-sizing:border-box; }
     html,body{ margin:0; background:var(--bg); color:var(--text);
       font-family:"Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
 
     header{
-      display:flex; align-items:center; gap:10px;
+      display:flex; align-items:center; justify-content:space-between;
       padding:12px 16px; position:sticky; top:0; z-index:2;
-      background:rgba(8,12,24,.7); backdrop-filter:blur(6px);
+      background:rgba(8,12,24,.07); backdrop-filter:blur(6px);
       border-bottom:1px solid var(--border);
     }
     header h1{ margin:0; font-size:16px; font-weight:700; letter-spacing:.2px; }
 
     .wrap{ max-width:1280px; margin:14px auto 32px; padding:0 14px; }
 
-    /* LabelFrame-style groups */
     .group{
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:12px;
-      margin:12px 0;
-      padding:16px 14px 14px;
-      position:relative;
-      box-shadow:0 10px 28px rgba(0,0,0,.35);
+      background:var(--panel); border:1px solid var(--border); border-radius:12px;
+      margin:12px 0; padding:16px 14px 14px; position:relative;
+      box-shadow:0 10px 28px rgba(0,0,0,.12);
     }
+    body.dark .group{ box-shadow:0 10px 28px rgba(0,0,0,.35); }
     .legend{
-      position:absolute; top:-10px; left:12px;
-      font-size:12px; color:var(--muted); letter-spacing:.2px;
-      background:var(--bg);
-      padding:0 8px; border:1px solid var(--border); border-radius:999px;
-      line-height:20px;
+      position:absolute; top:-10px; left:12px; font-size:12px; color:var(--muted); letter-spacing:.2px;
+      background:var(--bg); padding:0 8px; border:1px solid var(--border); border-radius:999px; line-height:20px;
     }
 
-    /* Layout grids */
     .grid-books{
-      display:grid;
-      /* smaller min width = more items per row */
-      grid-template-columns: repeat(12, minmax(100px, 1fr));
-      gap:6px;
+      display:grid; grid-template-columns: repeat(12, minmax(90px, 1fr)); gap:6px;
     }
-    @media (max-width:1200px){ .grid-books{ grid-template-columns: repeat(9, minmax(96px,1fr)); } }
-    @media (max-width:900px){  .grid-books{ grid-template-columns: repeat(6, minmax(92px,1fr)); } }
-    @media (max-width:640px){  .grid-books{ grid-template-columns: repeat(3, minmax(90px,1fr)); } }
+    @media (max-width:1200px){ .grid-books{ grid-template-columns: repeat(9, minmax(86px,1fr)); } }
+    @media (max-width:900px){  .grid-books{ grid-template-columns: repeat(6, minmax(84px,1fr)); } }
+    @media (max-width:640px){  .grid-books{ grid-template-columns: repeat(3, minmax(80px,1fr)); } }
 
     .grid-tight{ display:grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap:6px; }
 
@@ -70,30 +58,24 @@
       display:inline-flex; align-items:center; justify-content:center;
       background:var(--btn-bg); color:var(--text);
       border:1px solid var(--btn-border); border-radius:8px;
-      padding:4px 8px;
-      min-height:28px; min-width:36px;
+      padding:4px 8px; min-height:28px; min-width:36px;
       font-size:12px; font-weight:700; letter-spacing:.1px;
-      cursor:pointer; user-select:none;
+      cursor:pointer; user-select:none; text-align:center;
       transition:background .15s ease, border-color .15s ease, transform .03s ease;
-      text-align:center;
     }
     .btn:hover{ background:var(--btn-hover); border-color:#2b4271; }
     .btn:active{ transform:translateY(1px); }
-    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
-
-    /* Visual divider for "****" in book list */
-    .divider{
-      grid-column:1 / -1;
-      height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent);
-      margin:2px 0 6px;
-    }
-
+    .divider{ grid-column:1 / -1; height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:2px 0 6px; }
     .hint{ color:var(--muted); font-size:12px; margin-top:10px; }
+
+    /* tiny icon button in header */
+    .icon-btn{ min-width:34px; min-height:30px; padding:4px 6px; font-size:14px; }
   </style>
 </head>
 <body>
   <header>
     <h1>Bible Verse Navigator</h1>
+    <button id="themeToggle" class="btn icon-btn" title="Toggle theme">🌙</button>
   </header>
 
   <div class="wrap">
@@ -112,123 +94,113 @@
       <div id="verses" class="grid-tight"></div>
     </section>
 
-    <p class="hint">Open a verse to launch the presentation window. Use ← / → to navigate and the Full Screen button (ESC to exit).</p>
+    <p class="hint">Open a verse to launch the presentation window. Use ← / → to navigate; Full Screen supports ESC to exit.</p>
   </div>
 
   <script>
-    // ---------- Utilities ----------
+    // ---------- Theme setup (sync across windows) ----------
+    const THEME_KEY = "bible_theme";
+    function applySavedTheme(){
+      const saved = localStorage.getItem(THEME_KEY) || "dark"; // default to dark
+      document.body.classList.toggle("dark", saved === "dark");
+      document.getElementById("themeToggle").textContent = saved === "dark" ? "☀️" : "🌙";
+    }
+    applySavedTheme();
+    document.getElementById("themeToggle").addEventListener("click", ()=>{
+      const dark = !document.body.classList.contains("dark");
+      document.body.classList.toggle("dark", dark);
+      localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+      document.getElementById("themeToggle").textContent = dark ? "☀️" : "🌙";
+    });
+    // listen for changes from presentation window
+    window.addEventListener("storage", (e)=>{
+      if(e.key === THEME_KEY) applySavedTheme();
+    });
+
+    // ---------- Data & UI ----------
     const norm = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
     const toNum = s => { const n = parseInt(s,10); return Number.isFinite(n) ? n : -1; };
     const unique = arr => { const seen=new Set(); const out=[]; for(const x of arr){ if(!seen.has(x)){ seen.add(x); out.push(x);} } return out; };
 
-    // Custom book order (+ separators as "****")
     const BOOKS = [
-      "ഉല്‍‍പത്തി", "പുറപ്പാട്", "ലേവ്യര്‍", "സംഖ്യ", "നിയമാവര്‍ത്തനം",
-      "ജോഷ്വാ", "ന്യായാധിപ‌ന്‍മാര്‍", "റൂത്ത്",
-      "1 സാമുവല്‍", "2 സാമുവല്‍","****", "1 രാജാക്ക‌ന്‍മാര്‍", "2 രാജാക്ക‌ന്‍മാര്‍",
-      "1 ദിനവൃത്താന്തം", "2 ദിനവൃത്താന്തം", "എസ്രാ", "നെഹമിയ", "തോബിത്",
-      "യൂദിത്ത്", "എസ്തേര്‍", "1 മക്കബായര്‍", "2 മക്കബായര്‍", "ജോബ്","****",
-      "സങ്കീര്‍ത്തനങ്ങള്‍", "സുഭാഷിതങ്ങള്‍", "സഭാപ്രസംഗക‌ന്‍","****", "ഉത്തമഗീതം",
-      "ജ്ഞാനം", "പ്രഭാഷക‌ന്‍", "ഏശയ്യാ", "ജെറെമിയ", "വിലാപങ്ങള്‍", "ബാറൂക്ക്",
-      "എസെക്കിയേല്‍", "ദാനിയേല്‍", "****","ഹോസിയാ", "ജോയേല്‍", "ആമോസ്", "ഒബാദിയ",
-      "യോനാ", "മിക്കാ", "നാഹും", "ഹബക്കുക്ക്", "സെഫാനിയ", "ഹഗ്ഗായി",
-      "സഖറിയാ", "മലാക്കി", "****", "മത്തായി", "മര്‍ക്കോസ്", "ലൂക്കാ", "യോഹന്നാ‌ന്‍",
-      "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍", "****","റോമാ", "1 കൊറിന്തോസ്", "2 കൊറിന്തോസ്", "ഗലാത്തിയാ",
-      "എഫേസോസ്", "ഫിലിപ്പി", "കൊളോസോസ്", "1 തെസലോനിക്കാ", "2 തെസലോനിക്കാ",
-      "1 തിമോത്തേയോസ്", "2 തിമോത്തേയോസ്", "തീത്തോസ്","****", "ഫിലെമോ‌ന്‍",
-      "ഹെബ്രായര്‍", "യാക്കോബ്", "1 പത്രോസ്", "2 പത്രോസ്", "1 യോഹന്നാ‌ന്‍",
-      "2 യോഹന്നാ‌ന്‍", "3 യോഹന്നാ‌ന്‍", "യുദാസ്", "****","വെളിപാട്"
+      "ഉല്‍‍പത്തി","പുറപ്പാട്","ലേവ്യര്‍","സംഖ്യ","നിയമാവര്‍ത്തനം",
+      "ജോഷ്വാ","ന്യായാധിപ‌ന്‍മാര്‍","റൂത്ത്",
+      "1 സാമുവല്‍","2 സാമുവല്‍","****","1 രാജാക്ക‌ന്‍മാര്‍","2 രാജാക്ക‌ന്‍മാര്‍",
+      "1 ദിനവൃത്താന്തം","2 ദിനവൃത്താന്തം","എസ്രാ","നെഹമിയ","തോബിത്",
+      "യൂദിത്ത്","എസ്തേര്‍","1 മക്കബായര്‍","2 മക്കബായര്‍","ജോബ്","****",
+      "സങ്കീര്‍ത്തനങ്ങള്‍","സുഭാഷിതങ്ങള്‍","സഭാപ്രസംഗക‌ന്‍","****","ഉത്തമഗീതം",
+      "ജ്ഞാനം","പ്രഭാഷക‌ന്‍","ഏശയ്യാ","ജെറെമിയ","വിലാപങ്ങള്‍","ബാറൂക്ക്",
+      "എസെക്കിയേല്‍","ദാനിയേല്‍","****","ഹോസിയാ","ജോയേല്‍","ആമോസ്","ഒബാദിയ",
+      "യോനാ","മിക്കാ","നാഹും","ഹബക്കുക്ക്","സെഫാനിയ","ഹഗ്ഗായി",
+      "സഖറിയാ","മലാക്കി","****","മത്തായി","മര്‍ക്കോസ്","ലൂക്കാ","യോഹന്നാ‌ന്‍",
+      "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍","****","റോമാ","1 കൊറിന്തോസ്","2 കൊറിന്തോസ്","ഗലാത്തിയാ",
+      "എഫേസോസ്","ഫിലിപ്പി","കൊളോസോസ്","1 തെസലോനിക്കാ","2 തെസലോനിക്കാ",
+      "1 തിമോത്തേയോസ്","2 തിമോത്തേയോസ്","തീത്തോസ്","****","ഫിലെമോ‌ന്‍",
+      "ഹെബ്രായര്‍","യാക്കോബ്","1 പത്രോസ്","2 പത്രോസ്","1 യോഹന്നാ‌ന്‍",
+      "2 യോഹന്നാ‌ന്‍","3 യോഹന്നാ‌ന്‍","യുദാസ്","****","വെളിപാട്"
     ];
 
-    // ---------- State ----------
-    let ALL_ROWS = []; // CSV rows, as-is (we don't re-order)
-
-    // ---------- CSV parser (robust to quotes/commas) ----------
+    let ALL_ROWS = [];
     function parseCSV(text){
       const rows=[]; let row=[], field="", inQ=false;
-      for (let i=0;i<text.length;i++){
+      for(let i=0;i<text.length;i++){
         const c=text[i], n=text[i+1];
-        if(inQ){
-          if(c==='"' && n === '"'){ field+='"'; i++; }
-          else if(c==='"'){ inQ=false; }
-          else { field+=c; }
-        }else{
-          if(c==='"'){ inQ=true; }
-          else if(c===','){ row.push(field); field=""; }
-          else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=""; }
-          else if(c==='\r'){ /* ignore */ }
-          else { field+=c; }
-        }
+        if(inQ){ if(c==='"' && n==='"'){ field+='"'; i++; } else if(c==='"'){ inQ=false; } else { field+=c; } }
+        else{ if(c==='"'){ inQ=true; } else if(c===','){ row.push(field); field=""; }
+              else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+              else if(c==='\r'){ } else { field+=c; } }
       }
       if(field.length || row.length){ row.push(field); rows.push(row); }
       const header = rows.shift() || [];
       return rows.map(r => Object.fromEntries(header.map((h,i)=>[h, r[i] ?? ""])));
     }
 
-    // ---------- Load CSV ----------
     async function loadData(){
       const res = await fetch("verses.csv", { cache:"no-store" });
       if(!res.ok){ alert("verses.csv not found"); return; }
       const raw = await res.text();
       const rows = parseCSV(raw);
-
-      // Normalize & infer B/C/V from Title when needed
-      for (const r of rows){
+      for(const r of rows){
         const t = norm(r.Title);
-        if (t && t.includes(":")){
+        if(t && t.includes(":")){
           const [left, v] = t.split(":");
           const parts = norm(left).split(" ");
-          const ch = parts.pop() ?? "";
-          const b  = parts.join(" ");
-          r.Book    = norm(r.Book || b);
-          r.Chapter = norm(r.Chapter || ch);
-          r.Verse   = norm(r.Verse || v);
-        } else {
-          r.Book    = norm(r.Book);
-          r.Chapter = norm(r.Chapter);
-          r.Verse   = norm(r.Verse);
+          const ch = parts.pop() ?? ""; const b = parts.join(" ");
+          r.Book=norm(r.Book||b); r.Chapter=norm(r.Chapter||ch); r.Verse=norm(r.Verse||v);
+        }else{
+          r.Book=norm(r.Book); r.Chapter=norm(r.Chapter); r.Verse=norm(r.Verse);
         }
         r.Text = r.Text ?? "";
       }
-      ALL_ROWS = rows.filter(r => r.Book && r.Chapter && r.Verse);
-
+      ALL_ROWS = rows.filter(r=>r.Book && r.Chapter && r.Verse);
       renderBooks();
     }
 
-    // ---------- Renderers ----------
     const booksEl = document.getElementById("books");
     const chaptersEl = document.getElementById("chapters");
     const versesEl = document.getElementById("verses");
 
+    // TRUNCATE long book names visually to 6 chars (keep full value for logic)
     function renderBooks(){
-  booksEl.innerHTML = "";
-  BOOKS.forEach(name=>{
-    if(name==="****"){
-      const d=document.createElement("div");
-      d.className="divider";
-      booksEl.appendChild(d);
-    }else{
-      const b=document.createElement("button");
-      b.className="btn";
-
-      // Show only first 6 characters if longer
-      const displayText = name.length > 6 ? name.slice(0, 6) + "…" : name;
-      b.textContent = displayText;
-
-      // Keep full name for selection logic
-      b.title = name; // Tooltip on hover shows full name
-      b.onclick = () => selectBook(name);
-
-      booksEl.appendChild(b);
+      booksEl.innerHTML = "";
+      BOOKS.forEach(name=>{
+        if(name==="****"){
+          const d=document.createElement("div"); d.className="divider"; booksEl.appendChild(d);
+        }else{
+          const b=document.createElement("button");
+          b.className="btn";
+          const display = name.length>6 ? name.slice(0,6)+"…" : name;
+          b.textContent = display;
+          b.title = name;
+          b.onclick = ()=>selectBook(name);
+          booksEl.appendChild(b);
+        }
+      });
     }
-  });
-}
-
 
     function selectBook(book){
-      // Chapters that actually appear in CSV for this book
       const chapters = unique(
-        ALL_ROWS.filter(r => norm(r.Book) === norm(book)).map(r => r.Chapter)
+        ALL_ROWS.filter(r => norm(r.Book)===norm(book)).map(r=>r.Chapter)
       ).sort((a,b)=>toNum(a)-toNum(b));
 
       chaptersEl.innerHTML=""; versesEl.innerHTML="";
@@ -243,8 +215,7 @@
 
     function selectChapter(book, chapter){
       const verses = unique(
-        ALL_ROWS.filter(r => norm(r.Book)===norm(book) && norm(r.Chapter)===norm(chapter))
-                .map(r => r.Verse)
+        ALL_ROWS.filter(r => norm(r.Book)===norm(book) && norm(r.Chapter)===norm(chapter)).map(r=>r.Verse)
       ).sort((a,b)=>toNum(a)-toNum(b));
 
       versesEl.innerHTML="";
@@ -265,7 +236,6 @@
       window.open(url.toString(), "_blank", "noopener,noreferrer");
     }
 
-    // ---------- Start ----------
     loadData();
   </script>
 </body>
