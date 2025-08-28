@@ -84,8 +84,10 @@
   </div>
 
   <script>
+    // -------- Utilities & constants --------
     const normalizeText = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
     const safeInt = s => { const n = parseInt(s,10); return Number.isFinite(n) ? n : -1; };
+
     const BOOKS = [
       "ഉല്‍‍പത്തി","പുറപ്പാട്","ലേവ്യര്‍","സംഖ്യ","നിയമാവര്‍ത്തനം",
       "ജോഷ്വാ","ന്യായാധിപ‌ന്‍മാര്‍","റൂത്ത്",
@@ -105,14 +107,19 @@
     ];
     const bookOrder = new Map(BOOKS.map((b,i)=>[b,i]));
 
+    // Query params from index.html
     const qs = new URLSearchParams(location.search);
     let currentBook  = normalizeText(qs.get("book"));
     let currentChapter = normalizeText(qs.get("chapter"));
     let currentVerse = normalizeText(qs.get("verse"));
 
-    let DATA = []; // sorted full list
-    let currentIndex = -1;
+    // Data stores
+    let DATA = [];        // all verses, globally sorted
+    let BOOK_DATA = [];   // verses only from locked book
+    let lockedBook = "";  // normalized book name to lock navigation within
+    let bookIndex = -1;   // index inside BOOK_DATA
 
+    // -------- CSV parser --------
     function parseCSV(text) {
       const rows = [];
       let row = [], field = "", inQuotes = false;
@@ -135,10 +142,12 @@
       return rows.map(r => Object.fromEntries(header.map((h,idx)=>[h, r[idx] ?? ""])));
     }
 
+    // -------- Load & prepare data --------
     async function loadData() {
       const res = await fetch("verses.csv", { cache: "no-store" });
       const raw = await res.text();
       const rows = parseCSV(raw);
+
       for (const row of rows) {
         const t = normalizeText(row["Title"]);
         if (t && t.includes(":")) {
@@ -156,6 +165,8 @@
         }
         row.Text = row.Text ?? "";
       }
+
+      // globally sorted
       DATA = rows
         .filter(r => r.Book && r.Chapter && r.Verse)
         .sort((a,b) => {
@@ -167,76 +178,24 @@
           return safeInt(a.Verse) - safeInt(b.Verse);
         });
 
-      // find current index
-      currentIndex = DATA.findIndex(r =>
-        normalizeText(r.Book)===currentBook &&
-        normalizeText(r.Chapter)===currentChapter &&
-        normalizeText(r.Verse)===currentVerse
+      // lock to the initially opened book
+      lockedBook = normalizeText(currentBook);
+      BOOK_DATA = DATA.filter(r => normalizeText(r.Book) === lockedBook);
+
+      // index within BOOK_DATA
+      bookIndex = BOOK_DATA.findIndex(r =>
+        normalizeText(r.Book) === lockedBook &&
+        normalizeText(r.Chapter) === normalizeText(currentChapter) &&
+        normalizeText(r.Verse) === normalizeText(currentVerse)
       );
-      if (currentIndex < 0) currentIndex = 0;
+      if (bookIndex < 0) bookIndex = 0;
 
       render();
     }
 
+    // -------- Render current slide --------
     function render() {
-      const r = DATA[currentIndex];
+      const r = BOOK_DATA[bookIndex];
       if (!r) return;
-      currentBook = r.Book; currentChapter = r.Chapter; currentVerse = r.Verse;
 
-      document.getElementById("ref").textContent = `${currentBook} ${currentChapter}:${currentVerse}`;
-      const text = String(r.Text ?? "");
-      // Centered, bold, big text (handled by CSS). We just drop it in:
-      document.getElementById("verseText").textContent = text;
-
-      document.title = `${currentBook} ${currentChapter}:${currentVerse} — Presentation`;
-      history.replaceState(null, document.title,
-        `?book=${encodeURIComponent(currentBook)}&chapter=${encodeURIComponent(currentChapter)}&verse=${encodeURIComponent(currentVerse)}`
-      );
-    }
-
-    function nextVerse() {
-      if (currentIndex < DATA.length - 1) { currentIndex++; render(); }
-    }
-    function prevVerse() {
-      if (currentIndex > 0) { currentIndex--; render(); }
-    }
-
-    // Buttons
-    document.getElementById("nextBtn").addEventListener("click", nextVerse);
-    document.getElementById("prevBtn").addEventListener("click", prevVerse);
-
-    // Keyboard ← → and ESC (ESC handled by browser to exit fullscreen)
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight") { e.preventDefault(); nextVerse(); }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); prevVerse(); }
-    });
-
-    // Full Screen
-    const fsBtn = document.getElementById("fsBtn");
-    function isFullscreen() {
-      return !!(document.fullscreenElement || document.webkitFullscreenElement);
-    }
-    function requestFS() {
-      const el = document.documentElement;
-      const req = el.requestFullscreen || el.webkitRequestFullscreen;
-      if (req) req.call(el);
-    }
-    function exitFS() {
-      const ex = document.exitFullscreen || document.webkitExitFullscreen;
-      if (ex) ex.call(document);
-    }
-    fsBtn.addEventListener("click", () => {
-      if (!isFullscreen()) requestFS(); else exitFS();
-    });
-    document.addEventListener("fullscreenchange", () => {
-      fsBtn.textContent = isFullscreen() ? "⤡ Exit Full Screen" : "⤢ Full Screen";
-    });
-
-    // Load data
-    loadData().catch(err => {
-      console.error(err);
-      alert("Failed to load verses. Ensure verses.csv is present.");
-    });
-  </script>
-</body>
-</html>
+      // Keep bo
