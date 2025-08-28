@@ -4,63 +4,34 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Verse Presentation</title>
-
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
-
   <style>
     :root {
-      --bg: #0b1324;
-      --panel: #0e172b;
-      --muted: #95a3b8;
-      --text: #f5f7fb;
-      --accent: #0ea5e9;
+      --bg: #0b1324; --panel:#0e172b; --text:#f5f7fb; --muted:#9aa4b2;
+      --chrome:#101a33; --border:#22335a;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0; height: 100%; width: 100%;
-      font-family: "Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text); background: var(--bg);
-    }
-    .wrap {
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      min-height: 100%;
-    }
-    header {
-      display: flex; gap: 8px; align-items: center; justify-content: space-between;
-      padding: 10px 14px; background: rgba(8,12,24,.7); backdrop-filter: blur(6px);
-      border-bottom: 1px solid #1f2a44; position: sticky; top: 0;
-    }
-    #ref {
-      font-size: 20px; font-weight: 700; letter-spacing: .2px;
-    }
-    .controls { display: flex; gap: 8px; }
-    .btn {
-      padding: 8px 12px; border-radius: 10px; border: 1px solid #28406e;
-      background: #0e1527; color: var(--text); cursor: pointer; font-weight: 700;
-    }
-    .btn:hover { background: #101a33; }
-    main {
-      display: flex; align-items: center; justify-content: center; padding: 14px;
-    }
-    .slide {
-      width: min(1400px, 95vw);
-      min-height: min(72vh, 80svh);
-      border-radius: 20px; border: 1px solid #22335a;
+    *{ box-sizing: border-box; }
+    html,body{ margin:0; height:100%; background:var(--bg); color:var(--text);
+      font-family:"Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .wrap{ display:grid; grid-template-rows:auto 1fr auto; min-height:100%; }
+    header{ display:flex; justify-content:space-between; align-items:center;
+      padding:10px 14px; background:rgba(8,12,24,.65); backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--border); }
+    #ref{ font-size:20px; font-weight:700; letter-spacing:.2px; }
+    .controls{ display:flex; gap:8px; }
+    .btn{ padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:#0e1527; color:var(--text); font-weight:700; cursor:pointer; }
+    .btn:hover{ background:var(--chrome); }
+    main{ display:flex; align-items:center; justify-content:center; padding:14px; }
+    .slide{
+      width:min(1400px,95vw); min-height:min(72vh,80svh);
+      border-radius:20px; border:1px solid var(--border);
       background: radial-gradient(1400px 800px at 0% -20%, #1a2440 0%, #0d1426 40%);
-      box-shadow: 0 30px 70px rgba(0,0,0,.45);
-      display: grid; align-items: center; justify-items: center; padding: clamp(12px, 3vw, 26px);
-      text-align: center;
+      box-shadow:0 30px 70px rgba(0,0,0,.45);
+      display:grid; place-items:center; padding: clamp(12px, 3vw, 28px);
+      text-align:center;
     }
-    #verseText {
-      white-space: pre-wrap; line-height: 1.25;
-      font-weight: 700;
-      font-size: clamp(28px, 7vw, 64px);
-      letter-spacing: 0.2px;
-    }
-    footer {
-      text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 14px;
-    }
+    #verseText{ white-space:pre-wrap; line-height:1.28; font-weight:700; font-size: clamp(28px, 7vw, 64px); letter-spacing:.2px; }
+    footer{ text-align:center; color:var(--muted); font-size:12px; padding:10px 0 14px; }
   </style>
 </head>
 <body>
@@ -68,134 +39,134 @@
     <header>
       <div id="ref">—</div>
       <div class="controls">
-        <button class="btn" id="prevBtn" title="←">Previous</button>
-        <button class="btn" id="nextBtn" title="→">Next</button>
-        <button class="btn" id="fsBtn" title="Full Screen">⤢ Full Screen</button>
+        <button id="prevBtn" class="btn" title="←">Previous</button>
+        <button id="nextBtn" class="btn" title="→">Next</button>
+        <button id="fsBtn" class="btn" title="Full Screen">⤢ Full Screen</button>
       </div>
     </header>
 
     <main>
-      <div class="slide">
-        <div id="verseText">…</div>
-      </div>
+      <div class="slide"><div id="verseText">…</div></div>
     </main>
 
     <footer>Use ← / → to navigate. ESC to exit full screen.</footer>
   </div>
 
   <script>
-    // -------- Utilities & constants --------
-    const normalizeText = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
-    const safeInt = s => { const n = parseInt(s,10); return Number.isFinite(n) ? n : -1; };
+    // -------- Utilities --------
+    const normalize = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
 
-    const BOOKS = [
-      "ഉല്‍‍പത്തി","പുറപ്പാട്","ലേവ്യര്‍","സംഖ്യ","നിയമാവര്‍ത്തനം",
-      "ജോഷ്വാ","ന്യായാധിപ‌ന്‍മാര്‍","റൂത്ത്",
-      "1 സാമുവല്‍","2 സാമുവല്‍","****","1 രാജാക്ക‌ന്‍മാര്‍","2 രാജാക്ക‌ന്‍മാര്‍",
-      "1 ദിനവൃത്താന്തം","2 ദിനവൃത്താന്തം","എസ്രാ","നെഹമിയ","തോബിത്",
-      "യൂദിത്ത്","എസ്തേര്‍","1 മക്കബായര്‍","2 മക്കബായര്‍","ജോബ്","****",
-      "സങ്കീര്‍ത്തനങ്ങള്‍","സുഭാഷിതങ്ങള്‍","സഭാപ്രസംഗക‌ന്‍","****","ഉത്തമഗീതം",
-      "ജ്ഞാനം","പ്രഭാഷക‌ന്‍","ഏശയ്യാ","ജെറെമിയ","വിലാപങ്ങള്‍","ബാറൂക്ക്",
-      "എസെക്കിയേല്‍","ദാനിയേല്‍","****","ഹോസിയാ","ജോയേല്‍","ആമോസ്","ഒബാദിയ",
-      "യോനാ","മിക്കാ","നാഹും","ഹബക്കുക്ക്","സെഫാനിയ","ഹഗ്ഗായി",
-      "സഖറിയാ","മലാക്കി","****","മത്തായി","മര്‍ക്കോസ്","ലൂക്കാ","യോഹന്നാ‌ന്‍",
-      "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍","****","റോമാ","1 കൊറിന്തോസ്","2 കൊറിന്തോസ്","ഗലാത്തിയാ",
-      "എഫേസോസ്","ഫിലിപ്പി","കൊളോസോസ്","1 തെസലോനിക്കാ","2 തെസലോനിക്കാ",
-      "1 തിമോത്തേയോസ്","2 തിമോത്തേയോസ്","തീത്തോസ്","****","ഫിലെമോ‌ന്‍",
-      "ഹെബ്രായര്‍","യാക്കോബ്","1 പത്രോസ്","2 പത്രോസ്","1 യോഹന്നാ‌ന്‍",
-      "2 യോഹന്നാ‌ന്‍","3 യോഹന്നാ‌ന്‍","യുദാസ്","****","വെളിപാട്"
-    ];
-    const bookOrder = new Map(BOOKS.map((b,i)=>[b,i]));
-
-    // Query params from index.html
+    // Query params from index
     const qs = new URLSearchParams(location.search);
-    let currentBook  = normalizeText(qs.get("book"));
-    let currentChapter = normalizeText(qs.get("chapter"));
-    let currentVerse = normalizeText(qs.get("verse"));
+    const startBook    = normalize(qs.get("book"));
+    const startChapter = normalize(qs.get("chapter"));
+    const startVerse   = normalize(qs.get("verse"));
 
-    // Data stores
-    let DATA = [];        // all verses, globally sorted
-    let BOOK_DATA = [];   // verses only from locked book
-    let lockedBook = "";  // normalized book name to lock navigation within
-    let bookIndex = -1;   // index inside BOOK_DATA
+    // Data
+    let ALL = [];          // all csv rows, original order
+    let BOOK_ONLY = [];    // rows of this book only, original order
+    let idx = -1;          // index within BOOK_ONLY
 
-    // -------- CSV parser --------
-    function parseCSV(text) {
+    // CSV parser
+    function parseCSV(text){
       const rows = [];
-      let row = [], field = "", inQuotes = false;
-      for (let i=0;i<text.length;i++) {
-        const c = text[i], nxt = text[i+1];
-        if (inQuotes) {
-          if (c === '"' && nxt === '"') { field += '"'; i++; }
-          else if (c === '"') { inQuotes = false; }
-          else { field += c; }
-        } else {
-          if (c === '"') inQuotes = true;
-          else if (c === ',') { row.push(field); field = ""; }
-          else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
-          else if (c === '\r') { /* ignore */ }
-          else { field += c; }
+      let row=[], field="", q=false;
+      for (let i=0;i<text.length;i++){
+        const c=text[i], n=text[i+1];
+        if(q){
+          if(c==='"' && n === '"'){ field+='"'; i++; }
+          else if(c==='"'){ q=false; }
+          else { field+=c; }
+        }else{
+          if(c==='"'){ q=true; }
+          else if(c===','){ row.push(field); field=""; }
+          else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+          else if(c==='\r'){ }
+          else { field+=c; }
         }
       }
-      if (field.length || row.length) { row.push(field); rows.push(row); }
-      const header = rows.shift() ?? [];
-      return rows.map(r => Object.fromEntries(header.map((h,idx)=>[h, r[idx] ?? ""])));
+      if(field.length || row.length){ row.push(field); rows.push(row); }
+      const header = rows.shift() || [];
+      return rows.map(r => Object.fromEntries(header.map((h,i)=>[h, r[i] ?? ""])));
     }
 
-    // -------- Load & prepare data --------
-    async function loadData() {
+    async function load() {
       const res = await fetch("verses.csv", { cache: "no-store" });
       const raw = await res.text();
       const rows = parseCSV(raw);
 
-      for (const row of rows) {
-        const t = normalizeText(row["Title"]);
-        if (t && t.includes(":")) {
-          const [left, v] = t.split(":").map(normalizeText);
-          const leftParts = left.split(" ");
-          const ch = leftParts.pop() ?? "";
-          const b = leftParts.join(" ");
-          row.Book = normalizeText(row.Book || b);
-          row.Chapter = normalizeText(row.Chapter || ch);
-          row.Verse = normalizeText(row.Verse || v);
+      // normalize & fill Book/Chapter/Verse from Title when missing
+      for (const r of rows){
+        const t = normalize(r.Title);
+        if (t && t.includes(":")){
+          const [left, v] = t.split(":");
+          const parts = normalize(left).split(" ");
+          const ch = parts.pop() ?? "";
+          const b = parts.join(" ");
+          r.Book    = normalize(r.Book || b);
+          r.Chapter = normalize(r.Chapter || ch);
+          r.Verse   = normalize(r.Verse || v);
         } else {
-          row.Book = normalizeText(row.Book);
-          row.Chapter = normalizeText(row.Chapter);
-          row.Verse = normalizeText(row.Verse);
+          r.Book    = normalize(r.Book);
+          r.Chapter = normalize(r.Chapter);
+          r.Verse   = normalize(r.Verse);
         }
-        row.Text = row.Text ?? "";
+        r.Text = r.Text ?? "";
       }
 
-      // globally sorted
-      DATA = rows
-        .filter(r => r.Book && r.Chapter && r.Verse)
-        .sort((a,b) => {
-          const ai = bookOrder.get(a.Book) ?? 9999;
-          const bi = bookOrder.get(b.Book) ?? 9999;
-          if (ai !== bi) return ai - bi;
-          const ac = safeInt(a.Chapter), bc = safeInt(b.Chapter);
-          if (ac !== bc) return ac - bc;
-          return safeInt(a.Verse) - safeInt(b.Verse);
-        });
+      // Keep original CSV order
+      ALL = rows.filter(r => r.Book && r.Chapter && r.Verse);
 
-      // lock to the initially opened book
-      lockedBook = normalizeText(currentBook);
-      BOOK_DATA = DATA.filter(r => normalizeText(r.Book) === lockedBook);
+      // Lock to the starting book, preserve CSV order
+      BOOK_ONLY = ALL.filter(r => normalize(r.Book) === startBook);
 
-      // index within BOOK_DATA
-      bookIndex = BOOK_DATA.findIndex(r =>
-        normalizeText(r.Book) === lockedBook &&
-        normalizeText(r.Chapter) === normalizeText(currentChapter) &&
-        normalizeText(r.Verse) === normalizeText(currentVerse)
+      // Find the starting row index within BOOK_ONLY
+      idx = BOOK_ONLY.findIndex(r =>
+        normalize(r.Book) === startBook &&
+        normalize(r.Chapter) === startChapter &&
+        normalize(r.Verse) === startVerse
       );
-      if (bookIndex < 0) bookIndex = 0;
+      if (idx < 0) idx = 0;
 
       render();
     }
 
-    // -------- Render current slide --------
-    function render() {
-      const r = BOOK_DATA[bookIndex];
+    function render(){
+      const r = BOOK_ONLY[idx];
       if (!r) return;
+      document.getElementById("ref").textContent = `${r.Book} ${r.Chapter}:${r.Verse}`;
+      document.getElementById("verseText").textContent = String(r.Text ?? "");
+      document.title = `${r.Book} ${r.Chapter}:${r.Verse} — Presentation`;
 
-      // Keep bo
+      // Keep URL in sync (nice when copy/pasting during live)
+      history.replaceState(null, document.title,
+        `?book=${encodeURIComponent(r.Book)}&chapter=${encodeURIComponent(r.Chapter)}&verse=${encodeURIComponent(r.Verse)}`
+      );
+    }
+
+    // Navigation: strictly next/previous line within the same book
+    function nextRow(){ if (idx < BOOK_ONLY.length - 1){ idx++; render(); } }
+    function prevRow(){ if (idx > 0){ idx--; render(); } }
+
+    // Buttons & keyboard
+    document.getElementById("nextBtn").addEventListener("click", nextRow);
+    document.getElementById("prevBtn").addEventListener("click", prevRow);
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") { e.preventDefault(); nextRow(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); prevRow(); }
+    });
+
+    // Full Screen (ESC exits automatically)
+    const fsBtn = document.getElementById("fsBtn");
+    function fsActive(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+    function enterFS(){ (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen).call(document.documentElement); }
+    function exitFS(){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+    fsBtn.addEventListener("click", () => { fsActive() ? exitFS() : enterFS(); });
+    document.addEventListener("fullscreenchange", () => {
+      fsBtn.textContent = fsActive() ? "⤡ Exit Full Screen" : "⤢ Full Screen";
+    });
+
+    load().catch(e => { console.error(e); alert("Failed to load verses.csv"); });
+  </script>
+</body>
+</html>
