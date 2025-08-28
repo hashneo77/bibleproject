@@ -5,84 +5,90 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bible Verse Navigator</title>
 
-  <!-- Malayalam font for verse rendering later; UI uses system font -->
+  <!-- Malayalam font (also used by presentation) -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
-    /* Light, simple, ttk-like look to match your screenshot */
-    :root {
-      --bg: #f5f6f7;
-      --panel: #ffffff;
-      --border: #d6d8db;
-      --text: #111827;
-      --muted: #6b7280;
-      --btn-bg: #ffffff;
-      --btn-border: #c9ccd1;
-      --btn-hover: #f0f2f5;
+    /* Dark theme to match presentation.html */
+    :root{
+      --bg:#0b1324;
+      --panel:#0e172b;
+      --border:#22335a;
+      --text:#f5f7fb;
+      --muted:#9aa4b2;
+      --btn-bg:#0e1527;
+      --btn-hover:#101a33;
+      --btn-border:#22335a;
+      --accent:#0ea5e9;
     }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; background: var(--bg); color: var(--text); }
-    header {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px; border-bottom: 1px solid var(--border);
-      background: linear-gradient(#fff, #fafbfc);
-      position: sticky; top: 0; z-index: 1;
-    }
-    header h1 { margin: 0; font-size: 16px; font-weight: 700; }
-    .wrap { max-width: 1200px; margin: 12px auto; padding: 0 12px 24px; }
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; background:var(--bg); color:var(--text);
+      font-family:"Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
 
-    /* Fieldset-style blocks to mimic ttk LabelFrame */
-    .group {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      margin: 10px 0;
-      padding: 14px;
-      position: relative;
+    header{
+      display:flex; align-items:center; gap:10px;
+      padding:12px 16px; position:sticky; top:0; z-index:2;
+      background:rgba(8,12,24,.7); backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--border);
     }
-    .group > .legend {
-      position: absolute; top: -10px; left: 10px;
-      background: var(--bg);
-      padding: 0 6px;
-      font-size: 12px; color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      line-height: 18px;
+    header h1{ margin:0; font-size:16px; font-weight:700; letter-spacing:.2px; }
+
+    .wrap{ max-width:1280px; margin:14px auto 32px; padding:0 14px; }
+
+    /* LabelFrame-style groups */
+    .group{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:12px;
+      margin:12px 0;
+      padding:16px 14px 14px;
+      position:relative;
+      box-shadow:0 10px 28px rgba(0,0,0,.35);
+    }
+    .legend{
+      position:absolute; top:-10px; left:12px;
+      font-size:12px; color:var(--muted); letter-spacing:.2px;
+      background:var(--bg);
+      padding:0 8px; border:1px solid var(--border); border-radius:999px;
+      line-height:20px;
     }
 
-    .grid-books {
-      display: grid;
-      /* many columns like your screenshot; they’ll wrap nicely */
-      grid-template-columns: repeat(9, minmax(130px, 1fr));
-      gap: 8px;
+    /* Layout grids */
+    .grid-books{
+      display:grid;
+      /* smaller min width = more items per row */
+      grid-template-columns: repeat(12, minmax(100px, 1fr));
+      gap:6px;
     }
-    @media (max-width: 1200px) {
-      .grid-books { grid-template-columns: repeat(6, minmax(130px, 1fr)); }
-    }
-    @media (max-width: 800px) {
-      .grid-books { grid-template-columns: repeat(3, minmax(120px, 1fr)); }
-    }
-    .grid-tight { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 8px; }
+    @media (max-width:1200px){ .grid-books{ grid-template-columns: repeat(9, minmax(96px,1fr)); } }
+    @media (max-width:900px){  .grid-books{ grid-template-columns: repeat(6, minmax(92px,1fr)); } }
+    @media (max-width:640px){  .grid-books{ grid-template-columns: repeat(3, minmax(90px,1fr)); } }
 
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      background: var(--btn-bg);
-      border: 1px solid var(--btn-border);
-      border-radius: 6px;
-      padding: 6px 10px;
-      min-height: 30px; min-width: 38px;
-      cursor: pointer; user-select: none;
-      font-size: 14px;
+    .grid-tight{ display:grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap:6px; }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      background:var(--btn-bg); color:var(--text);
+      border:1px solid var(--btn-border); border-radius:8px;
+      padding:4px 8px;
+      min-height:28px; min-width:36px;
+      font-size:12px; font-weight:700; letter-spacing:.1px;
+      cursor:pointer; user-select:none;
+      transition:background .15s ease, border-color .15s ease, transform .03s ease;
+      text-align:center;
     }
-    .btn:hover { background: var(--btn-hover); }
-    .btn[disabled] { opacity: .6; cursor: not-allowed; }
-    .divider {
-      grid-column: 1 / -1;
-      height: 1px;
-      background: var(--border);
-      margin: 2px 0;
+    .btn:hover{ background:var(--btn-hover); border-color:#2b4271; }
+    .btn:active{ transform:translateY(1px); }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    /* Visual divider for "****" in book list */
+    .divider{
+      grid-column:1 / -1;
+      height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent);
+      margin:2px 0 6px;
     }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    .hint{ color:var(--muted); font-size:12px; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -106,16 +112,16 @@
       <div id="verses" class="grid-tight"></div>
     </section>
 
-    <p class="hint">After opening a verse, use ← / → to navigate. Use the Full Screen button; press ESC to exit.</p>
+    <p class="hint">Open a verse to launch the presentation window. Use ← / → to navigate and the Full Screen button (ESC to exit).</p>
   </div>
 
   <script>
-    // ---- Utilities ----
-    const normalizeText = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
-    const num = s => { const n = parseInt(s, 10); return Number.isFinite(n) ? n : -1; };
-    const unique = (arr) => { const seen = new Set(); const out=[]; for (const x of arr){ if(!seen.has(x)){ seen.add(x); out.push(x); } } return out; };
+    // ---------- Utilities ----------
+    const norm = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
+    const toNum = s => { const n = parseInt(s,10); return Number.isFinite(n) ? n : -1; };
+    const unique = arr => { const seen=new Set(); const out=[]; for(const x of arr){ if(!seen.has(x)){ seen.add(x); out.push(x);} } return out; };
 
-    // Book list with separators "****" (we only use it to render buttons in your order)
+    // Custom book order (+ separators as "****")
     const BOOKS = [
       "ഉല്‍‍പത്തി","പുറപ്പാട്","ലേവ്യര്‍","സംഖ്യ","നിയമാവര്‍ത്തനം",
       "ജോഷ്വാ","ന്യായാധിപ‌ന്‍മാര്‍","റൂത്ത്",
@@ -134,26 +140,24 @@
       "2 യോഹന്നാ‌ന്‍","3 യോഹന്നാ‌ന്‍","യുദാസ്","****","വെളിപാട്"
     ];
 
-    // ---- State ----
-    let ALL_ROWS = []; // full CSV (as-is)
-    let currentBook = "", currentChapter = "";
+    // ---------- State ----------
+    let ALL_ROWS = []; // CSV rows, as-is (we don't re-order)
 
-    // ---- CSV parser (handles quotes/commas) ----
-    function parseCSV(text) {
-      const rows = [];
-      let row = [], field = "", q = false;
+    // ---------- CSV parser (robust to quotes/commas) ----------
+    function parseCSV(text){
+      const rows=[]; let row=[], field="", inQ=false;
       for (let i=0;i<text.length;i++){
         const c=text[i], n=text[i+1];
-        if(q){
+        if(inQ){
           if(c==='"' && n === '"'){ field+='"'; i++; }
-          else if(c === '"'){ q=false; }
+          else if(c==='"'){ inQ=false; }
           else { field+=c; }
         }else{
-          if(c === '"'){ q = true; }
-          else if(c === ','){ row.push(field); field=""; }
-          else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=""; }
-          else if(c === '\r'){ /* ignore */ }
-          else { field += c; }
+          if(c==='"'){ inQ=true; }
+          else if(c===','){ row.push(field); field=""; }
+          else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+          else if(c==='\r'){ /* ignore */ }
+          else { field+=c; }
         }
       }
       if(field.length || row.length){ row.push(field); rows.push(row); }
@@ -161,28 +165,28 @@
       return rows.map(r => Object.fromEntries(header.map((h,i)=>[h, r[i] ?? ""])));
     }
 
-    // ---- Load data ----
-    async function loadData() {
-      const res = await fetch("verses.csv", { cache: "no-store" });
-      if (!res.ok) { alert("verses.csv not found"); return; }
+    // ---------- Load CSV ----------
+    async function loadData(){
+      const res = await fetch("verses.csv", { cache:"no-store" });
+      if(!res.ok){ alert("verses.csv not found"); return; }
       const raw = await res.text();
       const rows = parseCSV(raw);
 
-      // Normalize & fill Book/Chapter/Verse from Title if missing
+      // Normalize & infer B/C/V from Title when needed
       for (const r of rows){
-        const t = normalizeText(r.Title);
+        const t = norm(r.Title);
         if (t && t.includes(":")){
           const [left, v] = t.split(":");
-          const leftParts = normalizeText(left).split(" ");
-          const ch = leftParts.pop() ?? "";
-          const b  = leftParts.join(" ");
-          r.Book    = normalizeText(r.Book || b);
-          r.Chapter = normalizeText(r.Chapter || ch);
-          r.Verse   = normalizeText(r.Verse || v);
+          const parts = norm(left).split(" ");
+          const ch = parts.pop() ?? "";
+          const b  = parts.join(" ");
+          r.Book    = norm(r.Book || b);
+          r.Chapter = norm(r.Chapter || ch);
+          r.Verse   = norm(r.Verse || v);
         } else {
-          r.Book    = normalizeText(r.Book);
-          r.Chapter = normalizeText(r.Chapter);
-          r.Verse   = normalizeText(r.Verse);
+          r.Book    = norm(r.Book);
+          r.Chapter = norm(r.Chapter);
+          r.Verse   = norm(r.Verse);
         }
         r.Text = r.Text ?? "";
       }
@@ -191,65 +195,53 @@
       renderBooks();
     }
 
-    // ---- Render Books / Chapters / Verses ----
+    // ---------- Renderers ----------
     const booksEl = document.getElementById("books");
     const chaptersEl = document.getElementById("chapters");
     const versesEl = document.getElementById("verses");
 
     function renderBooks(){
       booksEl.innerHTML = "";
-      BOOKS.forEach(name => {
-        if (name === "****"){
-          const hr = document.createElement("div");
-          hr.className = "divider";
-          booksEl.appendChild(hr);
-        } else {
-          const b = document.createElement("button");
-          b.className = "btn";
-          b.textContent = name;
-          b.onclick = () => selectBook(name);
+      BOOKS.forEach(name=>{
+        if(name==="****"){
+          const d=document.createElement("div"); d.className="divider"; booksEl.appendChild(d);
+        }else{
+          const b=document.createElement("button");
+          b.className="btn"; b.textContent=name;
+          b.onclick=()=>selectBook(name);
           booksEl.appendChild(b);
         }
       });
     }
 
     function selectBook(book){
-      currentBook = book;
-      currentChapter = "";
-      // Chapters from rows of this book; sort numerically to look tidy like screenshot
+      // Chapters that actually appear in CSV for this book
       const chapters = unique(
-        ALL_ROWS.filter(r => normalizeText(r.Book) === normalizeText(book))
-                .map(r => r.Chapter)
-      ).sort((a,b)=> num(a)-num(b));
+        ALL_ROWS.filter(r => norm(r.Book) === norm(book)).map(r => r.Chapter)
+      ).sort((a,b)=>toNum(a)-toNum(b));
 
-      chaptersEl.innerHTML = "";
-      versesEl.innerHTML = "";
-      for (const ch of chapters){
+      chaptersEl.innerHTML=""; versesEl.innerHTML="";
+      for(const ch of chapters){
         if(!ch) continue;
-        const btn = document.createElement("button");
-        btn.className = "btn";
-        btn.textContent = ch;
-        btn.onclick = () => selectChapter(ch);
+        const btn=document.createElement("button");
+        btn.className="btn"; btn.textContent=ch;
+        btn.onclick=()=>selectChapter(book, ch);
         chaptersEl.appendChild(btn);
       }
     }
 
-    function selectChapter(chapter){
-      currentChapter = chapter;
+    function selectChapter(book, chapter){
       const verses = unique(
-        ALL_ROWS.filter(r =>
-          normalizeText(r.Book) === normalizeText(currentBook) &&
-          normalizeText(r.Chapter) === normalizeText(chapter)
-        ).map(r => r.Verse)
-      ).sort((a,b)=> num(a)-num(b));
+        ALL_ROWS.filter(r => norm(r.Book)===norm(book) && norm(r.Chapter)===norm(chapter))
+                .map(r => r.Verse)
+      ).sort((a,b)=>toNum(a)-toNum(b));
 
-      versesEl.innerHTML = "";
-      for (const v of verses){
+      versesEl.innerHTML="";
+      for(const v of verses){
         if(!v) continue;
-        const btn = document.createElement("button");
-        btn.className = "btn";
-        btn.textContent = v;
-        btn.onclick = () => openPresentation(currentBook, currentChapter, v);
+        const btn=document.createElement("button");
+        btn.className="btn"; btn.textContent=v;
+        btn.onclick=()=>openPresentation(book, chapter, v);
         versesEl.appendChild(btn);
       }
     }
@@ -262,6 +254,7 @@
       window.open(url.toString(), "_blank", "noopener,noreferrer");
     }
 
+    // ---------- Start ----------
     loadData();
   </script>
 </body>
