@@ -104,8 +104,9 @@
         <div class="controls">
           <button class="btn" id="prevBtn" title="Previous (←)">← Previous</button>
           <button class="btn" id="nextBtn" title="Next (→)">Next →</button>
+          <button class="btn" id="openPresentationBtn" title="Open a separate presentation window (P)">🖥️ Open Presentation</button>
         </div>
-        <p class="tips">Tip: Use your keyboard ← and → to move between verses.</p>
+        <p class="tips">Tip: Use your keyboard ← and → to move between verses. Press <kbd>P</kbd> to open presentation.</p>
       </section>
     </div>
 
@@ -141,7 +142,7 @@
       "എസെക്കിയേല്‍", "ദാനിയേല്‍", "****","ഹോസിയാ", "ജോയേല്‍", "ആമോസ്", "ഒബാദിയ",
       "യോനാ", "മിക്കാ", "നാഹും", "ഹബക്കുക്ക്", "സെഫാനിയ", "ഹഗ്ഗായി",
       "സഖറിയാ", "മലാക്കി", "****", "മത്തായി", "മര്‍ക്കോസ്", "ലൂക്കാ", "യോഹന്നാ‌ന്‍",
-      "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍", "****","റോമാ", "1 കൊറിന്തോസ്", "2 കൊറിന്തോസ്", "ഗലാത്തിയാ",
+      "അപ്പ. പ്രവർത്തനങ്ങള്‍", "****","റോമാ", "1 കൊറിന്തോസ്", "2 കൊറിന്തോസ്", "ഗലാത്തിയാ",
       "എഫേസോസ്", "ഫിലിപ്പി", "കൊളോസോസ്", "1 തെസലോനിക്കാ", "2 തെസലോനിക്കാ",
       "1 തിമോത്തേയോസ്", "2 തിമോത്തേയോസ്", "തീത്തോസ്","****", "ഫിലെമോ‌ന്‍",
       "ഹെബ്രായര്‍", "യാക്കോബ്", "1 പത്രോസ്", "2 പത്രോസ്", "1 യോഹന്നാ‌ന്‍",
@@ -159,6 +160,7 @@
     const verseEl = document.getElementById('verse');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const openPresentationBtn = document.getElementById('openPresentationBtn');
 
     // ===== CSV Loading =====
     async function loadCSV() {
@@ -213,7 +215,6 @@
       clear(booksEl);
       BOOKS.forEach(book => {
         if (book === '****') {
-          // spacer row (hidden chip keeps grid flow consistent)
           const sep = document.createElement('div'); sep.className = 'chip sep'; booksEl.appendChild(sep); return;
         }
         const btn = document.createElement('button');
@@ -282,11 +283,13 @@
         if (row) {
           refEl.textContent = `${row.Book} ${row.Chapter}:${row.Verse}`;
           verseEl.textContent = row.Text || '';
+          syncPresentation(); // keep presentation window updated
           return;
         }
       }
       refEl.textContent = '\u00A0';
       verseEl.textContent = 'വചനം തിരഞ്ഞെടുക്കുക (Select a verse)';
+      syncPresentation(); // clear presentation too
     }
 
     function highlightActive(container, value) {
@@ -306,7 +309,6 @@
     }
     function jumpToIndex(i) {
       const row = DATA[i]; if (!row) return;
-      // update selections & UI
       state.book = row.Book; state.chapter = row.Chapter; state.verse = row.Verse;
       highlightActive(booksEl, row.Book);
       renderChapters(row.Book);
@@ -320,7 +322,7 @@
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') { prevVerse(); e.preventDefault(); }
       if (e.key === 'ArrowRight') { nextVerse(); e.preventDefault(); }
-      // Optional: Command + ←/→ on macOS
+      if (e.key.toLowerCase() === 'p') { openPresentation(); e.preventDefault(); }
       if (e.metaKey && e.key === 'ArrowLeft') { prevVerse(); e.preventDefault(); }
       if (e.metaKey && e.key === 'ArrowRight') { nextVerse(); e.preventDefault(); }
     });
@@ -330,15 +332,113 @@
 
     const state = { book: '', chapter: '', verse: '' };
 
+    // ===== Presentation Window =====
+    let presWin = null;
+    function openPresentation() {
+      // Reuse if already open
+      if (!presWin || presWin.closed) {
+        presWin = window.open('', 'verse_presentation', 'width=1200,height=800');
+        if (!presWin) {
+          alert('Please allow pop-ups to use Presentation Mode.');
+          return;
+        }
+        // Write minimal HTML into the new window
+        presWin.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Presentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000814; --text: #e8ecff; --muted: #9fb0ff;
+      --btn: #1c2752; --btn-hover:#253163; --border:#1d2750;
+    }
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text);
+      font-family: "Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    .stage { display:flex; flex-direction:column; height:100%; }
+    .ref { text-align:center; font-weight:700; font-size: clamp(16px, 2.2vw, 28px); color: var(--muted);
+      padding: 10px 12px; border-bottom: 1px solid #0c1230; }
+    .verse { flex:1; display:flex; align-items:center; justify-content:center; padding: 4vh 5vw;
+      font-weight:700; font-size: clamp(36px, 7.5vw, 96px); line-height:1.25; text-align:center; white-space:pre-wrap; }
+    .controls { display:flex; gap:12px; justify-content:center; padding: 14px; border-top: 1px solid #0c1230; flex-wrap: wrap; }
+    .btn { background: var(--btn); border:1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 14px; font-size:16px; cursor:pointer; }
+    .btn:hover { background: var(--btn-hover); }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div id="ref" class="ref">&nbsp;</div>
+    <div id="verse" class="verse">വചനാവതരണം (Presentation)</div>
+    <div class="controls">
+      <button class="btn" id="prev">← Previous</button>
+      <button class="btn" id="next">Next →</button>
+      <button class="btn" id="fs">⛶ Full Screen</button>
+    </div>
+  </div>
+  <script>
+    // receive updates from opener
+    window.addEventListener('message', (ev) => {
+      if (!ev.data || ev.data.type !== 'VERSE_UPDATE') return;
+      const { ref, text } = ev.data.payload || {};
+      document.getElementById('ref').textContent = ref || '\\u00A0';
+      document.getElementById('verse').textContent = text || '';
+    });
+
+    // navigation buttons & keys -> request nav on opener
+    function nav(dir) { if (window.opener && !window.opener.closed) window.opener.postMessage({ type:'NAV', payload:{ dir } }, '*'); }
+
+    document.getElementById('prev').addEventListener('click', () => nav('prev'));
+    document.getElementById('next').addEventListener('click', () => nav('next'));
+
+    document.getElementById('fs').addEventListener('click', async () => {
+      try {
+        if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); }
+        else { await document.exitFullscreen(); }
+      } catch (e) { console.warn(e); }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { nav('prev'); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { nav('next'); e.preventDefault(); }
+    });
+  </script>
+</body>
+</html>`);
+        presWin.document.close();
+      }
+      // push current verse immediately
+      syncPresentation();
+      try { presWin.focus(); } catch (e) {}
+    }
+
+    function syncPresentation() {
+      if (!presWin || presWin.closed) return;
+      const ref = refEl.textContent || '';
+      const text = verseEl.textContent || '';
+      presWin.postMessage({ type: 'VERSE_UPDATE', payload: { ref, text } }, '*');
+    }
+
+    // Receive nav requests coming from presentation window
+    window.addEventListener('message', (ev) => {
+      if (!ev.data) return;
+      if (ev.data.type === 'NAV') {
+        const dir = (ev.data.payload && ev.data.payload.dir) || '';
+        if (dir === 'prev') prevVerse();
+        if (dir === 'next') nextVerse();
+      }
+    });
+
+    openPresentationBtn.addEventListener('click', openPresentation);
+
     // ===== Boot =====
     (async function init() {
       try {
         const raw = await loadCSV();
-        // add Book/Chapter/Verse columns by parsing Title, then sort
         DATA = enrichAndSort(raw);
-        // Render left panel
         renderBooks();
-        // If you want to auto-select the first available verse, uncomment:
+        // Optionally auto-select first verse:
         // currentIndex = 0; jumpToIndex(0);
       } catch (err) {
         verseEl.textContent = 'Failed to load verses.csv. Place it next to index.html in your repository.';
