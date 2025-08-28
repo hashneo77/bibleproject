@@ -64,8 +64,8 @@
     .btn:active { transform: translateY(1px); }
     .btn[disabled] { opacity: .5; cursor: not-allowed; }
     .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-    .chips.tight { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); }
-    .chips.tighter { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); }
+    .chips.tight { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
+    .chips.tighter { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 8px; }
     .divider {
       height: 1px; background: linear-gradient(90deg, transparent, #24345c, transparent);
       margin: 10px 0;
@@ -104,10 +104,7 @@
   <script>
     // ---- Utility functions (normalize & safe int) ----
     const normalizeText = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
-    const safeInt = s => {
-      const n = parseInt(s, 10);
-      return Number.isFinite(n) ? n : -1;
-    };
+    const safeInt = s => { const n = parseInt(s, 10); return Number.isFinite(n) ? n : -1; };
 
     // ---- Book order (with separators represented by "****") ----
     const BOOKS = [
@@ -123,7 +120,7 @@
       "സഖറിയാ","മലാക്കി","****","മത്തായി","മര്‍ക്കോസ്","ലൂക്കാ","യോഹന്നാ‌ന്‍",
       "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍","****","റോമാ","1 കൊറിന്തോസ്","2 കൊറിന്തോസ്","ഗലാത്തിയാ",
       "എഫേസോസ്","ഫിലിപ്പി","കൊളോസോസ്","1 തെസലോനിക്കാ","2 തെസലോനിക്കാ",
-      "1 തിമോത്തേയോസ്","2 തിമോത്തേയോസ്","തീത്തോസ്","****","ഫിലെമോ‌ന്‍",
+      "1 തിമോത്തേയോസ്","2 തിമോത്തeyeyോസ്","തീത്തോസ്","****","ഫിലെമോ‌ന്‍",
       "ഹെബ്രായര്‍","യാക്കോബ്","1 പത്രോസ്","2 പത്രോസ്","1 യോഹന്നാ‌ന്‍",
       "2 യോഹന്നാ‌ന്‍","3 യോഹന്നാ‌ന്‍","യുദാസ്","****","വെളിപാട്"
     ];
@@ -203,9 +200,7 @@
 
     function uniqueOrdered(arr) {
       const seen = new Set(); const out = [];
-      for (const x of arr) {
-        if (!seen.has(x)) { seen.add(x); out.push(x); }
-      }
+      for (const x of arr) if (!seen.has(x)) { seen.add(x); out.push(x); }
       return out;
     }
 
@@ -214,7 +209,6 @@
       let sawNT = false;
       BOOKS.forEach((name, idx) => {
         if (name === "****") {
-          // visual spacer divider inside the same card
           const div = document.createElement("div");
           div.className = "divider";
           booksEl.appendChild(div);
@@ -272,7 +266,6 @@
       url.searchParams.set("book", book);
       url.searchParams.set("chapter", chapter);
       url.searchParams.set("verse", verse);
-      // open in a new clean window (presentation)
       window.open(url.toString(), "_blank", "noopener,noreferrer");
     }
 
