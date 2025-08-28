@@ -6,61 +6,57 @@
   <title>Bible Verse Navigator</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* THEME VARIABLES */
+    /* ---------------- THEME VARIABLES ON :root ----------------
+       Default = DARK. Light overrides live on :root.light. */
     :root{
-      /* Light (default) */
-      --bg:#f5f6f7; --panel:#ffffff; --border:#d6d8db; --text:#111827; --muted:#6b7280;
-      --btn-bg:#ffffff; --btn-hover:#f0f2f5; --btn-border:#c9ccd1;
-      --accent:#0ea5e9;
-    }
-    body.dark{
-      /* Dark (matches presentation) */
       --bg:#0b1324; --panel:#0e172b; --border:#22335a; --text:#f5f7fb; --muted:#9aa4b2;
       --btn-bg:#0e1527; --btn-hover:#101a33; --btn-border:#22335a;
-      --accent:#0ea5e9;
+      --accent:#0ea5e9; --header-glass:rgba(8,12,24,.7); --shadow:rgba(0,0,0,.35);
+    }
+    :root.light{
+      --bg:#f5f6f7; --panel:#ffffff; --border:#d6d8db; --text:#111827; --muted:#6b7280;
+      --btn-bg:#ffffff; --btn-hover:#f0f2f5; --btn-border:#c9ccd1;
+      --accent:#0ea5e9; --header-glass:rgba(255,255,255,.7); --shadow:rgba(0,0,0,.12);
     }
 
+    /* Base layout */
     *{ box-sizing:border-box; }
-    html,body{ margin:0; background:var(--bg); color:var(--text);
-      font-family:"Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    html, body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:"Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    body{ min-height:100vh; }
 
     header{
       display:flex; align-items:center; justify-content:space-between;
       padding:12px 16px; position:sticky; top:0; z-index:2;
-      background:rgba(8,12,24,.07); backdrop-filter:blur(6px);
+      background:var(--header-glass); backdrop-filter:blur(6px);
       border-bottom:1px solid var(--border);
     }
     header h1{ margin:0; font-size:16px; font-weight:700; letter-spacing:.2px; }
 
     .wrap{ max-width:1280px; margin:14px auto 32px; padding:0 14px; }
 
+    /* LabelFrame-style groups */
     .group{
       background:var(--panel); border:1px solid var(--border); border-radius:12px;
       margin:12px 0; padding:16px 14px 14px; position:relative;
-      box-shadow:0 10px 28px rgba(0,0,0,.12);
+      box-shadow:0 10px 28px var(--shadow);
     }
-    body.dark .group{ box-shadow:0 10px 28px rgba(0,0,0,.35); }
     .legend{
       position:absolute; top:-10px; left:12px; font-size:12px; color:var(--muted); letter-spacing:.2px;
       background:var(--bg); padding:0 8px; border:1px solid var(--border); border-radius:999px; line-height:20px;
     }
 
+    /* Tighter grids to fit more buttons like your screenshot */
     .grid-books{
-      display:grid; grid-template-columns: repeat(12, minmax(90px, 1fr)); gap:6px;
+      display:grid; grid-template-columns: repeat(12, minmax(88px, 1fr)); gap:6px;
     }
-    @media (max-width:1200px){ .grid-books{ grid-template-columns: repeat(9, minmax(86px,1fr)); } }
-    @media (max-width:900px){  .grid-books{ grid-template-columns: repeat(6, minmax(84px,1fr)); } }
-    @media (max-width:640px){  .grid-books{ grid-template-columns: repeat(3, minmax(80px,1fr)); } }
+    @media (max-width:1200px){ .grid-books{ grid-template-columns: repeat(9, minmax(84px,1fr)); } }
+    @media (max-width:900px){  .grid-books{ grid-template-columns: repeat(6, minmax(82px,1fr)); } }
+    @media (max-width:640px){  .grid-books{ grid-template-columns: repeat(3, minmax(78px,1fr)); } }
 
     .grid-tight{ display:grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap:6px; }
-
-    .footer-note{
-      text-align:center;
-      font-size:11px;
-      color:var(--muted);
-      margin-top:14px;
-      padding:6px 0 10px;
-    }
 
     .btn{
       display:inline-flex; align-items:center; justify-content:center;
@@ -73,8 +69,14 @@
     }
     .btn:hover{ background:var(--btn-hover); border-color:#2b4271; }
     .btn:active{ transform:translateY(1px); }
+
     .divider{ grid-column:1 / -1; height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:2px 0 6px; }
     .hint{ color:var(--muted); font-size:12px; margin-top:10px; }
+
+    .footer-note{
+      text-align:center; font-size:11px; color:var(--muted);
+      margin-top:14px; padding:6px 0 10px;
+    }
 
     /* tiny icon button in header */
     .icon-btn{ min-width:34px; min-height:30px; padding:4px 6px; font-size:14px; }
@@ -83,7 +85,7 @@
 <body>
   <header>
     <h1>Bible Verse Navigator</h1>
-    <button id="themeToggle" class="btn icon-btn" title="Toggle theme">🌙</button>
+    <button id="themeToggle" class="btn icon-btn" title="Toggle theme">☀️</button>
   </header>
 
   <div class="wrap">
@@ -101,30 +103,35 @@
       <div class="legend">Verses</div>
       <div id="verses" class="grid-tight"></div>
     </section>
-  
+
+    <p class="hint">Open a verse to launch the presentation window. Use ← / → to navigate; Full Screen supports ESC to exit.</p>
+    <p class="footer-note">Made in Love by the Evangelisation Commission for Great Britain</p>
   </div>
-  
+
   <script>
-    // ---------- Theme setup (sync across windows) ----------
+    /* ---------------- THEME (persist + no light strip) ---------------- */
     const THEME_KEY = "bible_theme";
+    const root = document.documentElement; // <html>
+
     function applySavedTheme(){
-      const saved = localStorage.getItem(THEME_KEY) || "dark"; // default to dark
-      document.body.classList.toggle("dark", saved === "dark");
-      document.getElementById("themeToggle").textContent = saved === "dark" ? "☀️" : "🌙";
+      // Default to dark (no .light class). Add .light only for light theme.
+      const saved = localStorage.getItem(THEME_KEY) || "dark";
+      root.classList.toggle("light", saved === "light");
+      document.getElementById("themeToggle").textContent = saved === "light" ? "🌙" : "☀️";
     }
     applySavedTheme();
+
     document.getElementById("themeToggle").addEventListener("click", ()=>{
-      const dark = !document.body.classList.contains("dark");
-      document.body.classList.toggle("dark", dark);
-      localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
-      document.getElementById("themeToggle").textContent = dark ? "☀️" : "🌙";
-    });
-    // listen for changes from presentation window
-    window.addEventListener("storage", (e)=>{
-      if(e.key === THEME_KEY) applySavedTheme();
+      const nowLight = !root.classList.contains("light");
+      root.classList.toggle("light", nowLight);
+      localStorage.setItem(THEME_KEY, nowLight ? "light" : "dark");
+      document.getElementById("themeToggle").textContent = nowLight ? "🌙" : "☀️";
     });
 
-    // ---------- Data & UI ----------
+    // sync if another window changes it
+    window.addEventListener("storage", (e)=>{ if(e.key === THEME_KEY) applySavedTheme(); });
+
+    /* ---------------- Data & UI ---------------- */
     const norm = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
     const toNum = s => { const n = parseInt(s,10); return Number.isFinite(n) ? n : -1; };
     const unique = arr => { const seen=new Set(); const out=[]; for(const x of arr){ if(!seen.has(x)){ seen.add(x); out.push(x);} } return out; };
@@ -187,7 +194,7 @@
     const chaptersEl = document.getElementById("chapters");
     const versesEl = document.getElementById("verses");
 
-    // TRUNCATE long book names visually to 6 chars (keep full value for logic)
+    // Truncate long book names to 6 chars visually (keep full for logic)
     function renderBooks(){
       booksEl.innerHTML = "";
       BOOKS.forEach(name=>{
