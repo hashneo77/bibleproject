@@ -72,7 +72,11 @@
 
     .divider{ grid-column:1 / -1; height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:2px 0 6px; }
     .hint{ color:var(--muted); font-size:12px; margin-top:10px; }
-
+    .verse {
+      font-weight: 700; font-size: clamp(26px, 7vw, 52px); line-height: 1.25;
+      text-align: center; white-space: pre-wrap;
+      padding: 10px 8px; min-height: 180px; display: flex; align-items: center; justify-content: center;
+    }
     .footer-note{
       text-align:center; font-size:11px; color:var(--muted);
       margin-top:14px; padding:6px 0 10px;
