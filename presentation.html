@@ -182,7 +182,7 @@
     function enterFS(){ (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen).call(document.documentElement); }
     function exitFS(){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
     fsBtn.addEventListener("click", ()=>{ fsActive()?exitFS():enterFS(); });
-    document.addEventListener("fullscreenchange", ()=>{ fsBtn.textContent = fsActive() ? "⤡ Exit Full Screen" : "⤢ Full Screen"; });
+    document.addEventListener("fullscreenchange", ()=>{ fsBtn.textContent = fsActive() ? "⤡" : "⤢ "; });
 
     load().catch(e => { console.error(e); alert("Failed to load verses.csv"); });
   </script>
