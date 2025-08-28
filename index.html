@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bible Verse Navigator (Web)</title>
+  <!-- Malayalam font -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
+  <!-- PapaParse for CSV parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121933;
+      --panel-2: #0f1630;
+      --text: #e8ecff;
+      --muted: #9fb0ff;
+      --accent: #6ea8ff;
+      --btn: #1c2752;
+      --btn-hover: #253163;
+      --chip: #1a234a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: "Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    header {
+      position: sticky; top: 0; z-index: 5; backdrop-filter: blur(8px);
+      border-bottom: 1px solid #223;
+      background: linear-gradient(180deg, rgba(11,16,32,0.9), rgba(11,16,32,0.6));
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
+    h1 { margin: 0; font-size: 20px; letter-spacing: 0.3px; color: var(--muted); }
+
+    .grid {
+      display: grid; gap: 12px; grid-template-columns: 330px 1fr;
+    }
+    @media (max-width: 960px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .panel { background: var(--panel); border: 1px solid #1a2144; border-radius: 16px; }
+    .panel h2 { margin: 0; padding: 12px 14px; font-size: 14px; color: var(--muted); border-bottom: 1px solid #1a2144; }
+    .panel-body { padding: 12px; }
+
+    .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+    .chip { background: var(--chip); border: 1px solid #223058; color: var(--text); padding: 8px 10px; border-radius: 999px; cursor: pointer; text-align: center; font-size: 13px; }
+    .chip:hover { background: #223058; }
+    .chip.sep { opacity: 0; pointer-events: none; height: 0; padding: 0; margin: 0; }
+    .chip.active { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .tiny-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap: 6px; }
+    .tiny-btn { background: var(--btn); border: 1px solid #1d2750; color: var(--text); padding: 8px 0; border-radius: 10px; cursor: pointer; font-size: 13px; }
+    .tiny-btn:hover { background: var(--btn-hover); }
+    .tiny-btn.active { outline: 2px solid var(--accent); outline-offset: 2px; background: #223058; }
+
+    .viewer { background: var(--panel-2); border: 1px solid #1a2144; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .ref { font-weight: 700; font-size: 18px; color: var(--muted); text-align: center; }
+    .verse {
+      font-weight: 700; font-size: clamp(26px, 7vw, 52px); line-height: 1.25; text-align: center; white-space: pre-wrap;
+      padding: 10px 8px; min-height: 180px; display: flex; align-items: center; justify-content: center;
+    }
+
+    .controls { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .btn { background: var(--btn); border: 1px solid #1d2750; color: var(--text); padding: 10px 14px; border-radius: 12px; cursor: pointer; font-size: 14px; }
+    .btn:hover { background: var(--btn-hover); }
+
+    .tips { text-align: center; color: var(--muted); font-size: 12px; }
+    .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    .footer { color: var(--muted); font-size: 12px; text-align: center; padding: 16px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>📖 Bible Verse Navigator</h1>
+    </div>
+  </header>
+
+  <main class="wrap" id="app">
+    <div class="grid">
+      <section class="panel" aria-labelledby="booksLabel">
+        <h2 id="booksLabel">പുസ്തകങ്ങള്‍ (Books)</h2>
+        <div class="panel-body">
+          <div id="books" class="chips" role="listbox" aria-label="Books list"></div>
+        </div>
+
+        <h2 id="chaptersLabel">അധ്യായങ്ങള്‍ (Chapters)</h2>
+        <div class="panel-body">
+          <div id="chapters" class="tiny-grid" role="listbox" aria-labelledby="chaptersLabel"></div>
+        </div>
+
+        <h2 id="versesLabel">വചനങ്ങള്‍ (Verses)</h2>
+        <div class="panel-body">
+          <div id="verses" class="tiny-grid" role="listbox" aria-labelledby="versesLabel"></div>
+        </div>
+      </section>
+
+      <section class="viewer" aria-live="polite">
+        <div class="ref" id="ref">&nbsp;</div>
+        <div class="verse" id="verse">വചനം തിരഞ്ഞെടുക്കുക (Select a verse)</div>
+        <div class="controls">
+          <button class="btn" id="prevBtn" title="Previous (←)">← Previous</button>
+          <button class="btn" id="nextBtn" title="Next (→)">Next →</button>
+        </div>
+        <p class="tips">Tip: Use your keyboard ← and → to move between verses.</p>
+      </section>
+    </div>
+
+    <p class="footer">Load your <code>verses.csv</code> in the same folder as this page. CSV must have headers: <code>Title,Text</code>.</p>
+  </main>
+
+  <script>
+    // ===== Helpers =====
+    function normalizeText(t) {
+      if (!t) return '';
+      try { t = t.normalize('NFKC'); } catch (e) {}
+      return t.replace(/\u200d/g, '').replace(/\u00A0/g, ' ').trim();
+    }
+    function safeInt(s) {
+      const n = parseInt(s, 10); return Number.isFinite(n) ? n : -1;
+    }
+    function uniqueOrdered(arr) {
+      const seen = new Set();
+      const out = [];
+      for (const x of arr) { if (!seen.has(x)) { seen.add(x); out.push(x); } }
+      return out;
+    }
+
+    // ===== Data & State =====
+    const BOOKS = [
+      "ഉല്‍‍പത്തി", "പുറപ്പാട്", "ലേവ്യര്‍", "സംഖ്യ", "നിയമാവര്‍ത്തനം",
+      "ജോഷ്വാ", "ന്യായാധിപ‌ന്‍മാര്‍", "റൂത്ത്",
+      "1 സാമുവല്‍", "2 സാമുവല്‍","****", "1 രാജാക്ക‌ന്‍മാര്‍", "2 രാജാക്ക‌ന്‍മാര്‍",
+      "1 ദിനവൃത്താന്തം", "2 ദിനവൃത്താന്തം", "എസ്രാ", "നെഹമിയ", "തോബിത്",
+      "യൂദിത്ത്", "എസ്തേര്‍", "1 മക്കബായര്‍", "2 മക്കബായര്‍", "ജോബ്","****",
+      "സങ്കീര്‍ത്തനങ്ങള്‍", "സുഭാഷിതങ്ങള്‍", "സഭാപ്രസംഗക‌ന്‍","****", "ഉത്തമഗീതം",
+      "ജ്ഞാനം", "പ്രഭാഷക‌ന്‍", "ഏശയ്യാ", "ജെറെമിയ", "വിലാപങ്ങള്‍", "ബാറൂക്ക്",
+      "എസെക്കിയേല്‍", "ദാനിയേല്‍", "****","ഹോസിയാ", "ജോയേല്‍", "ആമോസ്", "ഒബാദിയ",
+      "യോനാ", "മിക്കാ", "നാഹും", "ഹബക്കുക്ക്", "സെഫാനിയ", "ഹഗ്ഗായി",
+      "സഖറിയാ", "മലാക്കി", "****", "മത്തായി", "മര്‍ക്കോസ്", "ലൂക്കാ", "യോഹന്നാ‌ന്‍",
+      "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍", "****","റോമാ", "1 കൊറിന്തോസ്", "2 കൊറിന്തോസ്", "ഗലാത്തിയാ",
+      "എഫേസോസ്", "ഫിലിപ്പി", "കൊളോസോസ്", "1 തെസലോനിക്കാ", "2 തെസലോനിക്കാ",
+      "1 തിമോത്തേയോസ്", "2 തിമോത്തേയോസ്", "തീത്തോസ്","****", "ഫിലെമോ‌ന്‍",
+      "ഹെബ്രായര്‍", "യാക്കോബ്", "1 പത്രോസ്", "2 പത്രോസ്", "1 യോഹന്നാ‌ന്‍",
+      "2 യോഹന്നാ‌ന്‍", "3 യോഹന്നാ‌ന്‍", "യുദാസ്", "****","വെളിപാട്"
+    ];
+
+    let DATA = [];           // full rows with Book/Chapter/Verse/Text
+    let currentIndex = -1;   // pointer into DATA
+
+    // ===== UI Elements =====
+    const booksEl = document.getElementById('books');
+    const chaptersEl = document.getElementById('chapters');
+    const versesEl = document.getElementById('verses');
+    const refEl = document.getElementById('ref');
+    const verseEl = document.getElementById('verse');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // ===== CSV Loading =====
+    async function loadCSV() {
+      // Expect verses.csv next to index.html
+      const url = new URL('verses.csv', location.href).href;
+      return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          complete: (res) => resolve(res.data),
+          error: reject,
+          encoding: 'utf-8'
+        });
+      });
+    }
+
+    function parseTitle(row) {
+      const title = (row['Title'] || '').trim();
+      if (!title.includes(':')) return { Book: '', Chapter: '', Verse: '' };
+      const lastColon = title.lastIndexOf(':');
+      const left = title.slice(0, lastColon).trim();
+      const verse = title.slice(lastColon + 1).trim();
+      const leftParts = left.split(/\s+(?=[^\s]+$)/); // split on last space
+      const book = leftParts.length === 2 ? leftParts[0].trim() : '';
+      const chapter = leftParts.length === 2 ? leftParts[1].trim() : '';
+      return { Book: book, Chapter: chapter, Verse: verse };
+    }
+
+    function enrichAndSort(raw) {
+      const rows = raw.map(r => {
+        const x = { ...r };
+        const parts = parseTitle(r);
+        x.Book = parts.Book; x.Chapter = parts.Chapter; x.Verse = parts.Verse;
+        x.Text = r['Text'] || '';
+        return x;
+      });
+      rows.sort((a, b) => {
+        const k1 = normalizeText(a.Book).localeCompare(normalizeText(b.Book));
+        if (k1 !== 0) return k1;
+        const c = safeInt(a.Chapter) - safeInt(b.Chapter);
+        if (c !== 0) return c;
+        return safeInt(a.Verse) - safeInt(b.Verse);
+      });
+      return rows;
+    }
+
+    // ===== Rendering =====
+    function clear(el) { el.innerHTML = ''; }
+
+    function renderBooks() {
+      clear(booksEl);
+      BOOKS.forEach(book => {
+        if (book === '****') {
+          // spacer row (hidden chip keeps grid flow consistent)
+          const sep = document.createElement('div'); sep.className = 'chip sep'; booksEl.appendChild(sep); return;
+        }
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = book;
+        btn.addEventListener('click', () => selectBook(book));
+        btn.setAttribute('role', 'option');
+        booksEl.appendChild(btn);
+      });
+    }
+
+    function selectBook(book) {
+      state.book = book; state.chapter = ''; state.verse = '';
+      highlightActive(booksEl, book);
+      renderChapters(book);
+      clear(versesEl);
+      updateViewer();
+    }
+
+    function renderChapters(book) {
+      clear(chaptersEl);
+      const chapters = uniqueOrdered(
+        DATA.filter(r => normalizeText(r.Book) === normalizeText(book)).map(r => r.Chapter).filter(Boolean)
+      );
+      chapters.forEach(ch => {
+        const b = document.createElement('button');
+        b.className = 'tiny-btn'; b.textContent = ch;
+        b.addEventListener('click', () => selectChapter(ch));
+        chaptersEl.appendChild(b);
+      });
+    }
+
+    function selectChapter(chapter) {
+      state.chapter = chapter; state.verse = '';
+      highlightActive(chaptersEl, chapter);
+      renderVerses(state.book, chapter);
+      updateViewer();
+    }
+
+    function renderVerses(book, chapter) {
+      clear(versesEl);
+      const verses = uniqueOrdered(
+        DATA.filter(r => normalizeText(r.Book) === normalizeText(book) && normalizeText(r.Chapter) === normalizeText(chapter)).map(r => r.Verse).filter(Boolean)
+      );
+      verses.forEach(v => {
+        const b = document.createElement('button');
+        b.className = 'tiny-btn'; b.textContent = v;
+        b.addEventListener('click', () => selectVerse(v));
+        versesEl.appendChild(b);
+      });
+    }
+
+    function selectVerse(verse) {
+      state.verse = verse;
+      highlightActive(versesEl, verse);
+      // set currentIndex
+      currentIndex = DATA.findIndex(r =>
+        normalizeText(r.Book) === normalizeText(state.book) && normalizeText(r.Chapter) === normalizeText(state.chapter) && normalizeText(r.Verse) === normalizeText(state.verse)
+      );
+      updateViewer();
+    }
+
+    function updateViewer() {
+      if (state.book && state.chapter && state.verse) {
+        const row = DATA[currentIndex] || DATA.find(r => normalizeText(r.Book) === normalizeText(state.book) && normalizeText(r.Chapter) === normalizeText(state.chapter) && normalizeText(r.Verse) === normalizeText(state.verse));
+        if (row) {
+          refEl.textContent = `${row.Book} ${row.Chapter}:${row.Verse}`;
+          verseEl.textContent = row.Text || '';
+          return;
+        }
+      }
+      refEl.textContent = '\u00A0';
+      verseEl.textContent = 'വചനം തിരഞ്ഞെടുക്കുക (Select a verse)';
+    }
+
+    function highlightActive(container, value) {
+      [...container.children].forEach(el => {
+        if (!el.classList.contains('chip') && !el.classList.contains('tiny-btn')) return;
+        el.classList.toggle('active', el.textContent.trim() === String(value).trim());
+      });
+    }
+
+    // ===== Navigation =====
+    function nextVerse() {
+      if (currentIndex < 0) return; if (currentIndex >= DATA.length - 1) return;
+      currentIndex += 1; jumpToIndex(currentIndex);
+    }
+    function prevVerse() {
+      if (currentIndex <= 0) return; currentIndex -= 1; jumpToIndex(currentIndex);
+    }
+    function jumpToIndex(i) {
+      const row = DATA[i]; if (!row) return;
+      // update selections & UI
+      state.book = row.Book; state.chapter = row.Chapter; state.verse = row.Verse;
+      highlightActive(booksEl, row.Book);
+      renderChapters(row.Book);
+      highlightActive(chaptersEl, row.Chapter);
+      renderVerses(row.Book, row.Chapter);
+      highlightActive(versesEl, row.Verse);
+      updateViewer();
+    }
+
+    // Keyboard bindings (works on macOS/iPad hardware keyboards too)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { prevVerse(); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { nextVerse(); e.preventDefault(); }
+      // Optional: Command + ←/→ on macOS
+      if (e.metaKey && e.key === 'ArrowLeft') { prevVerse(); e.preventDefault(); }
+      if (e.metaKey && e.key === 'ArrowRight') { nextVerse(); e.preventDefault(); }
+    });
+
+    prevBtn.addEventListener('click', prevVerse);
+    nextBtn.addEventListener('click', nextVerse);
+
+    const state = { book: '', chapter: '', verse: '' };
+
+    // ===== Boot =====
+    (async function init() {
+      try {
+        const raw = await loadCSV();
+        // add Book/Chapter/Verse columns by parsing Title, then sort
+        DATA = enrichAndSort(raw);
+        // Render left panel
+        renderBooks();
+        // If you want to auto-select the first available verse, uncomment:
+        // currentIndex = 0; jumpToIndex(0);
+      } catch (err) {
+        verseEl.textContent = 'Failed to load verses.csv. Place it next to index.html in your repository.';
+        console.error(err);
+      }
+    })();
+  </script>
+</body>
+</html>
