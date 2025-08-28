@@ -6,27 +6,39 @@
   <title>Verse Presentation</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #0b1324; --panel:#0e172b; --text:#f5f7fb; --muted:#9aa4b2;
-      --chrome:#101a33; --border:#22335a;
+    :root{
+      /* Light */
+      --bg:#f5f6f7; --panel:#ffffff; --border:#d6d8db; --text:#111827; --muted:#6b7280;
+      --chrome:#eef1f6;
     }
+    body.dark{
+      /* Dark */
+      --bg:#0b1324; --panel:#0e172b; --border:#22335a; --text:#f5f7fb; --muted:#9aa4b2;
+      --chrome:#101a33;
+    }
+
     *{ box-sizing: border-box; }
     html,body{ margin:0; height:100%; background:var(--bg); color:var(--text);
       font-family:"Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     .wrap{ display:grid; grid-template-rows:auto 1fr auto; min-height:100%; }
-    header{ display:flex; justify-content:space-between; align-items:center;
-      padding:10px 14px; background:rgba(8,12,24,.65); backdrop-filter:blur(6px);
-      border-bottom:1px solid var(--border); }
+    header{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 14px; backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--border); background:rgba(8,12,24,.07);
+    }
     #ref{ font-size:20px; font-weight:700; letter-spacing:.2px; }
     .controls{ display:flex; gap:8px; }
-    .btn{ padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:#0e1527; color:var(--text); font-weight:700; cursor:pointer; }
+    .btn{ padding:8px 12px; border-radius:10px; border:1px solid var(--border);
+      background:var(--panel); color:var(--text); font-weight:700; cursor:pointer; }
     .btn:hover{ background:var(--chrome); }
+    .icon-btn{ min-width:34px; min-height:30px; padding:4px 6px; font-size:14px; }
+
     main{ display:flex; align-items:center; justify-content:center; padding:14px; }
     .slide{
       width:min(1400px,95vw); min-height:min(72vh,80svh);
       border-radius:20px; border:1px solid var(--border);
-      background: radial-gradient(1400px 800px at 0% -20%, #1a2440 0%, #0d1426 40%);
-      box-shadow:0 30px 70px rgba(0,0,0,.45);
+      background: radial-gradient(1400px 800px at 0% -20%, rgba(26,36,64,.7) 0%, rgba(13,20,38,.4) 40%);
+      box-shadow:0 30px 70px rgba(0,0,0,.25);
       display:grid; place-items:center; padding: clamp(12px, 3vw, 28px);
       text-align:center;
     }
@@ -42,6 +54,7 @@
         <button id="prevBtn" class="btn" title="←">Previous</button>
         <button id="nextBtn" class="btn" title="→">Next</button>
         <button id="fsBtn" class="btn" title="Full Screen">⤢ Full Screen</button>
+        <button id="themeToggle" class="btn icon-btn" title="Toggle theme">🌙</button>
       </div>
     </header>
 
@@ -53,37 +66,39 @@
   </div>
 
   <script>
-    // -------- Utilities --------
-    const normalize = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
+    // -------- Theme (sync with index via localStorage) --------
+    const THEME_KEY = "bible_theme";
+    function applySavedTheme(){
+      const saved = localStorage.getItem(THEME_KEY) || "dark";
+      document.body.classList.toggle("dark", saved === "dark");
+      document.getElementById("themeToggle").textContent = saved === "dark" ? "☀️" : "🌙";
+    }
+    applySavedTheme();
+    document.getElementById("themeToggle").addEventListener("click", ()=>{
+      const dark = !document.body.classList.contains("dark");
+      document.body.classList.toggle("dark", dark);
+      localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+      document.getElementById("themeToggle").textContent = dark ? "☀️" : "🌙";
+    });
+    window.addEventListener("storage", (e)=>{ if(e.key === THEME_KEY) applySavedTheme(); });
 
-    // Query params from index
+    // -------- CSV + navigation (same as before) --------
+    const normalize = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
     const qs = new URLSearchParams(location.search);
     const startBook    = normalize(qs.get("book"));
     const startChapter = normalize(qs.get("chapter"));
     const startVerse   = normalize(qs.get("verse"));
 
-    // Data
-    let ALL = [];          // all csv rows, original order
-    let BOOK_ONLY = [];    // rows of this book only, original order
-    let idx = -1;          // index within BOOK_ONLY
+    let ALL = [], BOOK_ONLY = [], idx = -1;
 
-    // CSV parser
     function parseCSV(text){
-      const rows = [];
-      let row=[], field="", q=false;
+      const rows=[]; let row=[], field="", q=false;
       for (let i=0;i<text.length;i++){
         const c=text[i], n=text[i+1];
-        if(q){
-          if(c==='"' && n === '"'){ field+='"'; i++; }
-          else if(c==='"'){ q=false; }
-          else { field+=c; }
-        }else{
-          if(c==='"'){ q=true; }
-          else if(c===','){ row.push(field); field=""; }
-          else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=""; }
-          else if(c==='\r'){ }
-          else { field+=c; }
-        }
+        if(q){ if(c==='"' && n === '"'){ field+='"'; i++; } else if(c==='"'){ q=false; } else { field+=c; } }
+        else{ if(c==='"'){ q=true; } else if(c===','){ row.push(field); field=""; }
+              else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+              else if(c==='\r'){ } else { field+=c; } }
       }
       if(field.length || row.length){ row.push(field); rows.push(row); }
       const header = rows.shift() || [];
@@ -95,36 +110,26 @@
       const raw = await res.text();
       const rows = parseCSV(raw);
 
-      // normalize & fill Book/Chapter/Verse from Title when missing
       for (const r of rows){
         const t = normalize(r.Title);
         if (t && t.includes(":")){
           const [left, v] = t.split(":");
           const parts = normalize(left).split(" ");
-          const ch = parts.pop() ?? "";
-          const b = parts.join(" ");
-          r.Book    = normalize(r.Book || b);
+          const ch = parts.pop() ?? ""; const b = parts.join(" ");
+          r.Book = normalize(r.Book || b);
           r.Chapter = normalize(r.Chapter || ch);
-          r.Verse   = normalize(r.Verse || v);
+          r.Verse = normalize(r.Verse || v);
         } else {
-          r.Book    = normalize(r.Book);
-          r.Chapter = normalize(r.Chapter);
-          r.Verse   = normalize(r.Verse);
+          r.Book = normalize(r.Book); r.Chapter = normalize(r.Chapter); r.Verse = normalize(r.Verse);
         }
         r.Text = r.Text ?? "";
       }
 
-      // Keep original CSV order
       ALL = rows.filter(r => r.Book && r.Chapter && r.Verse);
-
-      // Lock to the starting book, preserve CSV order
       BOOK_ONLY = ALL.filter(r => normalize(r.Book) === startBook);
 
-      // Find the starting row index within BOOK_ONLY
       idx = BOOK_ONLY.findIndex(r =>
-        normalize(r.Book) === startBook &&
-        normalize(r.Chapter) === startChapter &&
-        normalize(r.Verse) === startVerse
+        normalize(r.Book)===startBook && normalize(r.Chapter)===startChapter && normalize(r.Verse)===startVerse
       );
       if (idx < 0) idx = 0;
 
@@ -132,39 +137,29 @@
     }
 
     function render(){
-      const r = BOOK_ONLY[idx];
-      if (!r) return;
+      const r = BOOK_ONLY[idx]; if(!r) return;
       document.getElementById("ref").textContent = `${r.Book} ${r.Chapter}:${r.Verse}`;
       document.getElementById("verseText").textContent = String(r.Text ?? "");
       document.title = `${r.Book} ${r.Chapter}:${r.Verse} — Presentation`;
-
-      // Keep URL in sync (nice when copy/pasting during live)
       history.replaceState(null, document.title,
         `?book=${encodeURIComponent(r.Book)}&chapter=${encodeURIComponent(r.Chapter)}&verse=${encodeURIComponent(r.Verse)}`
       );
     }
 
-    // Navigation: strictly next/previous line within the same book
-    function nextRow(){ if (idx < BOOK_ONLY.length - 1){ idx++; render(); } }
-    function prevRow(){ if (idx > 0){ idx--; render(); } }
+    function nextRow(){ if(idx < BOOK_ONLY.length-1){ idx++; render(); } }
+    function prevRow(){ if(idx > 0){ idx--; render(); } }
 
-    // Buttons & keyboard
     document.getElementById("nextBtn").addEventListener("click", nextRow);
     document.getElementById("prevBtn").addEventListener("click", prevRow);
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight") { e.preventDefault(); nextRow(); }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); prevRow(); }
-    });
+    window.addEventListener("keydown", (e)=>{ if(e.key==="ArrowRight"){ e.preventDefault(); nextRow(); } else if(e.key==="ArrowLeft"){ e.preventDefault(); prevRow(); } });
 
-    // Full Screen (ESC exits automatically)
+    // Fullscreen
     const fsBtn = document.getElementById("fsBtn");
     function fsActive(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
     function enterFS(){ (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen).call(document.documentElement); }
     function exitFS(){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
-    fsBtn.addEventListener("click", () => { fsActive() ? exitFS() : enterFS(); });
-    document.addEventListener("fullscreenchange", () => {
-      fsBtn.textContent = fsActive() ? "⤡ Exit Full Screen" : "⤢ Full Screen";
-    });
+    fsBtn.addEventListener("click", ()=>{ fsActive()?exitFS():enterFS(); });
+    document.addEventListener("fullscreenchange", ()=>{ fsBtn.textContent = fsActive() ? "⤡ Exit Full Screen" : "⤢ Full Screen"; });
 
     load().catch(e => { console.error(e); alert("Failed to load verses.csv"); });
   </script>
