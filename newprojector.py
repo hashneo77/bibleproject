@@ -4,6 +4,7 @@ import csv
 import sys
 import os
 import unicodedata
+from collections import defaultdict
 
 def normalize_text(text):
     if not text:
@@ -32,7 +33,7 @@ with open(resource_path('verses.csv'), encoding='utf-8') as f:
     reader = csv.DictReader(f)
     data = list(reader)
 
-# Parse Title field
+
 for row in data:
     title = row['Title'].strip()
     if ':' not in title:
@@ -53,27 +54,24 @@ def unique_ordered(seq):
 books = [
     "ഉല്‍‍പത്തി", "പുറപ്പാട്", "ലേവ്യര്‍", "സംഖ്യ", "നിയമാവര്‍ത്തനം",
     "ജോഷ്വാ", "ന്യായാധിപ‌ന്‍മാര്‍", "റൂത്ത്",
-    "1 സാമുവല്‍", "2 സാമുവല്‍", "1 രാജാക്ക‌ന്‍മാര്‍", "2 രാജാക്ക‌ന്‍മാര്‍",
+    "1 സാമുവല്‍", "2 സാമുവല്‍","****", "1 രാജാക്ക‌ന്‍മാര്‍", "2 രാജാക്ക‌ന്‍മാര്‍",
     "1 ദിനവൃത്താന്തം", "2 ദിനവൃത്താന്തം", "എസ്രാ", "നെഹമിയ", "തോബിത്",
-    "യൂദിത്ത്", "എസ്തേര്‍", "1 മക്കബായര്‍", "2 മക്കബായര്‍", "ജോബ്",
-    "സങ്കീര്‍ത്തനങ്ങള്‍", "സുഭാഷിതങ്ങള്‍", "സഭാപ്രസംഗക‌ന്‍", "ഉത്തമഗീതം",
+    "യൂദിത്ത്", "എസ്തേര്‍", "1 മക്കബായര്‍", "2 മക്കബായര്‍", "ജോബ്","****",
+    "സങ്കീര്‍ത്തനങ്ങള്‍", "സുഭാഷിതങ്ങള്‍", "സഭാപ്രസംഗക‌ന്‍","****", "ഉത്തമഗീതം",
     "ജ്ഞാനം", "പ്രഭാഷക‌ന്‍", "ഏശയ്യാ", "ജെറെമിയ", "വിലാപങ്ങള്‍", "ബാറൂക്ക്",
-    "എസെക്കിയേല്‍", "ദാനിയേല്‍", "ഹോസിയാ", "ജോയേല്‍", "ആമോസ്", "ഒബാദിയ",
+    "എസെക്കിയേല്‍", "ദാനിയേല്‍", "****","ഹോസിയാ", "ജോയേല്‍", "ആമോസ്", "ഒബാദിയ",
     "യോനാ", "മിക്കാ", "നാഹും", "ഹബക്കുക്ക്", "സെഫാനിയ", "ഹഗ്ഗായി",
     "സഖറിയാ", "മലാക്കി", "****", "മത്തായി", "മര്‍ക്കോസ്", "ലൂക്കാ", "യോഹന്നാ‌ന്‍",
-    "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍", "റോമാ", "1 കൊറിന്തോസ്", "2 കൊറിന്തോസ്", "ഗലാത്തിയാ",
+    "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍", "****","റോമാ", "1 കൊറിന്തോസ്", "2 കൊറിന്തോസ്", "ഗലാത്തിയാ",
     "എഫേസോസ്", "ഫിലിപ്പി", "കൊളോസോസ്", "1 തെസലോനിക്കാ", "2 തെസലോനിക്കാ",
-    "1 തിമോത്തേയോസ്", "2 തിമോത്തേയോസ്", "തീത്തോസ്", "ഫിലെമോ‌ന്‍",
+    "1 തിമോത്തേയോസ്", "2 തിമോത്തേയോസ്", "തീത്തോസ്","****", "ഫിലെമോ‌ന്‍",
     "ഹെബ്രായര്‍", "യാക്കോബ്", "1 പത്രോസ്", "2 പത്രോസ്", "1 യോഹന്നാ‌ന്‍",
-    "2 യോഹന്നാ‌ന്‍", "3 യോഹന്നാ‌ന്‍", "യുദാസ്", "വെളിപാട്"
+    "2 യോഹന്നാ‌ന്‍", "3 യോഹന്നാ‌ന്‍", "യുദാസ്", "****","വെളിപാട്"
 ]
-
 root = tk.Tk()
 root.title("Bible Verse Navigator")
 root.geometry('1000x700')
 root.minsize(700, 400)
-style = ttk.Style()
-style.configure("Small.TButton", font=("TkDefaultFont", 8))
 
 book_selected = tk.StringVar()
 chapter_selected = tk.StringVar()
@@ -94,7 +92,6 @@ chapter_frame.grid(row=1, column=0, sticky='NSEW', padx=5, pady=5)
 
 verse_frame = ttk.LabelFrame(main_frame, text="Verses")
 verse_frame.grid(row=2, column=0, sticky='NSEW', padx=5, pady=5)
-
 
 
 def insert_centered_text(widget, text,book,chapter,verse):
@@ -126,16 +123,16 @@ def display_verse():
                 verse_window = tk.Toplevel(root)
                 verse_window.title("Verse Display")
                 verse_window.geometry("800x500")
-                verse_window.bind('<Left>', lambda event: prev_verse())
-                verse_window.bind('<Right>', lambda event: next_verse())
+                verse_window.bind("<Left>", lambda e: prev_verse())
+                verse_window.bind("<Right>", lambda e: next_verse())
                 verse_label_widget = ttk.Label(verse_window, text=f"{book} {chapter}:{verse}", font=('Noto Sans Malayalam', 18, 'bold'))
                 verse_label_widget.pack(pady=(10, 0))
                 text_box = tk.Text(verse_window, wrap=tk.WORD, font=('Noto Sans Malayalam', 49,'bold'), spacing3=10, height=10)
                 text_box.pack(fill='both', expand=True, padx=10, pady=10)
                 btn_frame = ttk.Frame(verse_window)
                 btn_frame.pack(pady=5)
-                ttk.Button(btn_frame, text="Previous", command=prev_verse, style="Small.TButton").pack(side='left', padx=5)
-                ttk.Button(btn_frame, text="Next", command=next_verse, style="Small.TButton").pack(side='left', padx=5)
+                ttk.Button(btn_frame, text="Previous", command=prev_verse).pack(side='left', padx=5)
+                ttk.Button(btn_frame, text="Next", command=next_verse).pack(side='left', padx=5)
             
             else:
                 verse_window.deiconify()
@@ -144,26 +141,36 @@ def display_verse():
             insert_centered_text(text_box, row['Text'],book,chapter,verse)
             break
 
+
+
 def clear_frame(frame):
     for widget in frame.winfo_children():
         widget.destroy()
 
 def load_books():
     clear_frame(book_frame)
-    max_cols = 17
-    font_style = ('Noto Sans Malayalam', 10,'bold')
+    max_cols = 19
+    font_style = ('Noto Sans Malayalam', 10, 'bold')
     style = ttk.Style()
     style.configure('Book.TButton', font=font_style)
+    
     display_index = 0
+    row = 0
+    col = 0
+
     for book in books:
         if book == "****":
-            display_index = ((display_index // max_cols) + 1) * max_cols
+            # Skip a row for New Testament
+            row += 1
+            col = 0
             continue
-        row = display_index // max_cols
-        col = display_index % max_cols
-        btn = ttk.Button(book_frame, text=book, width=16, command=lambda b=book: select_book(b), style='Book.TButton')
-        btn.grid(row=row, column=col, padx=2, pady=2)
-        display_index += 1
+        btn = ttk.Button(book_frame, text=book, width=18, command=lambda b=book: select_book(b), style='Book.TButton')
+        btn.grid(row=row, column=col, padx=2, pady=2, sticky='w')
+        col += 1
+        if col >= max_cols:
+            col = 0
+            row += 1
+
 
 def select_book(book):
     book_selected.set(book)
