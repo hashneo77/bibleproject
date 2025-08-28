@@ -3,75 +3,86 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bible Verse Navigator (Web)</title>
+  <title>Bible Verse Navigator</title>
 
-  <!-- Malayalam font -->
+  <!-- Malayalam font for verse rendering later; UI uses system font -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
+    /* Light, simple, ttk-like look to match your screenshot */
     :root {
-      --accent: #0f766e;
-      --bg: #0b1324;
-      --panel: #121a2b;
-      --muted: #9aa4b2;
-      --text: #e5e7eb;
+      --bg: #f5f6f7;
+      --panel: #ffffff;
+      --border: #d6d8db;
+      --text: #111827;
+      --muted: #6b7280;
+      --btn-bg: #ffffff;
+      --btn-border: #c9ccd1;
+      --btn-hover: #f0f2f5;
     }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Noto Sans Malayalam", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
-      background: radial-gradient(1200px 700px at 20% -10%, #1a2440 0%, var(--bg) 40%);
-      min-height: 100vh;
-    }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
     header {
-      padding: 16px 20px;
-      border-bottom: 1px solid #1f2a44;
-      position: sticky; top: 0; background: rgba(11,19,36,0.75); backdrop-filter: blur(6px);
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      background: linear-gradient(#fff, #fafbfc);
+      position: sticky; top: 0; z-index: 1;
     }
-    h1 { margin: 0; font-weight: 700; letter-spacing: .2px; }
-    .container { padding: 18px 20px 40px; max-width: 1400px; margin: 0 auto; }
-    .grid {
-      display: grid;
-      grid-template-columns: 1.1fr .9fr .9fr;
-      gap: 14px;
-    }
-    @media (max-width: 1024px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-    .card {
+    header h1 { margin: 0; font-size: 16px; font-weight: 700; }
+    .wrap { max-width: 1200px; margin: 12px auto; padding: 0 12px 24px; }
+
+    /* Fieldset-style blocks to mimic ttk LabelFrame */
+    .group {
       background: var(--panel);
-      border: 1px solid #1f2a44;
-      border-radius: 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin: 10px 0;
       padding: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      position: relative;
     }
-    .card h2 {
-      margin: 2px 0 12px;
-      font-size: 18px;
-      color: #cfe1ff;
-      letter-spacing: .2px;
-      font-weight: 700;
+    .group > .legend {
+      position: absolute; top: -10px; left: 10px;
+      background: var(--bg);
+      padding: 0 6px;
+      font-size: 12px; color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      line-height: 18px;
     }
+
+    .grid-books {
+      display: grid;
+      /* many columns like your screenshot; they’ll wrap nicely */
+      grid-template-columns: repeat(9, minmax(130px, 1fr));
+      gap: 8px;
+    }
+    @media (max-width: 1200px) {
+      .grid-books { grid-template-columns: repeat(6, minmax(130px, 1fr)); }
+    }
+    @media (max-width: 800px) {
+      .grid-books { grid-template-columns: repeat(3, minmax(120px, 1fr)); }
+    }
+    .grid-tight { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 8px; }
+
     .btn {
       display: inline-flex; align-items: center; justify-content: center;
-      padding: 8px 12px; border-radius: 10px; border: 1px solid #2a395f;
-      background: #0e1527; color: var(--text); cursor: pointer; user-select: none;
-      font-weight: 600; transition: transform .03s ease, background .15s ease, border-color .15s ease;
-      min-width: 44px;
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      min-height: 30px; min-width: 38px;
+      cursor: pointer; user-select: none;
+      font-size: 14px;
     }
-    .btn:hover { background: #101a33; border-color: #36508c; }
-    .btn:active { transform: translateY(1px); }
-    .btn[disabled] { opacity: .5; cursor: not-allowed; }
-    .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-    .chips.tight { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
-    .chips.tighter { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 8px; }
+    .btn:hover { background: var(--btn-hover); }
+    .btn[disabled] { opacity: .6; cursor: not-allowed; }
     .divider {
-      height: 1px; background: linear-gradient(90deg, transparent, #24345c, transparent);
-      margin: 10px 0;
+      grid-column: 1 / -1;
+      height: 1px;
+      background: var(--border);
+      margin: 2px 0;
     }
-    .nt-tag { margin: 8px 0 4px; color: var(--muted); font-size: 12px; }
-    .footer-note { color: var(--muted); font-size: 12px; margin-top: 14px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -79,34 +90,32 @@
     <h1>Bible Verse Navigator</h1>
   </header>
 
-  <div class="container">
-    <div class="grid">
-      <section class="card" id="books-card">
-        <h2>Books</h2>
-        <div class="chips" id="books"></div>
-        <div class="nt-tag" id="ntMarker" style="display:none;">— New Testament —</div>
-      </section>
+  <div class="wrap">
+    <section class="group">
+      <div class="legend">Books</div>
+      <div id="books" class="grid-books"></div>
+    </section>
 
-      <section class="card">
-        <h2>Chapters</h2>
-        <div class="chips tight" id="chapters"></div>
-      </section>
+    <section class="group">
+      <div class="legend">Chapters</div>
+      <div id="chapters" class="grid-tight"></div>
+    </section>
 
-      <section class="card">
-        <h2>Verses</h2>
-        <div class="chips tighter" id="verses"></div>
-      </section>
-    </div>
+    <section class="group">
+      <div class="legend">Verses</div>
+      <div id="verses" class="grid-tight"></div>
+    </section>
 
-    <p class="footer-note">Tip: After opening a verse, use your keyboard ← / → to move between verses. Press the Full Screen button (ESC to exit).</p>
+    <p class="hint">After opening a verse, use ← / → to navigate. Use the Full Screen button; press ESC to exit.</p>
   </div>
 
   <script>
-    // ---- Utility functions (normalize & safe int) ----
+    // ---- Utilities ----
     const normalizeText = s => (s ?? "").normalize("NFKC").replace(/\u200d/g,"").replace(/\u00A0/g," ").trim();
-    const safeInt = s => { const n = parseInt(s, 10); return Number.isFinite(n) ? n : -1; };
+    const num = s => { const n = parseInt(s, 10); return Number.isFinite(n) ? n : -1; };
+    const unique = (arr) => { const seen = new Set(); const out=[]; for (const x of arr){ if(!seen.has(x)){ seen.add(x); out.push(x); } } return out; };
 
-    // ---- Book order (with separators represented by "****") ----
+    // Book list with separators "****" (we only use it to render buttons in your order)
     const BOOKS = [
       "ഉല്‍‍പത്തി","പുറപ്പാട്","ലേവ്യര്‍","സംഖ്യ","നിയമാവര്‍ത്തനം",
       "ജോഷ്വാ","ന്യായാധിപ‌ന്‍മാര്‍","റൂത്ത്",
@@ -120,148 +129,132 @@
       "സഖറിയാ","മലാക്കി","****","മത്തായി","മര്‍ക്കോസ്","ലൂക്കാ","യോഹന്നാ‌ന്‍",
       "അപ്പ. പ്രവര്‍ത്തനങ്ങള്‍","****","റോമാ","1 കൊറിന്തോസ്","2 കൊറിന്തോസ്","ഗലാത്തിയാ",
       "എഫേസോസ്","ഫിലിപ്പി","കൊളോസോസ്","1 തെസലോനിക്കാ","2 തെസലോനിക്കാ",
-      "1 തിമോത്തേയോസ്","2 തിമോത്തeyeyോസ്","തീത്തോസ്","****","ഫിലെമോ‌ന്‍",
+      "1 തിമോത്തേയോസ്","2 തിമോത്തേയോസ്","തീത്തോസ്","****","ഫിലെമോ‌ന്‍",
       "ഹെബ്രായര്‍","യാക്കോബ്","1 പത്രോസ്","2 പത്രോസ്","1 യോഹന്നാ‌ന്‍",
       "2 യോഹന്നാ‌ന്‍","3 യോഹന്നാ‌ന്‍","യുദാസ്","****","വെളിപാട്"
     ];
-    const bookOrder = new Map(BOOKS.map((b,i)=>[b,i]));
 
-    // ---- Simple CSV parser (handles quoted fields) ----
+    // ---- State ----
+    let ALL_ROWS = []; // full CSV (as-is)
+    let currentBook = "", currentChapter = "";
+
+    // ---- CSV parser (handles quotes/commas) ----
     function parseCSV(text) {
       const rows = [];
-      let row = [], field = "", inQuotes = false;
-      for (let i=0;i<text.length;i++) {
-        const c = text[i], nxt = text[i+1];
-        if (inQuotes) {
-          if (c === '"' && nxt === '"') { field += '"'; i++; }
-          else if (c === '"') { inQuotes = false; }
-          else { field += c; }
-        } else {
-          if (c === '"') inQuotes = true;
-          else if (c === ',') { row.push(field); field = ""; }
-          else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
-          else if (c === '\r') { /* ignore CR */ }
+      let row = [], field = "", q = false;
+      for (let i=0;i<text.length;i++){
+        const c=text[i], n=text[i+1];
+        if(q){
+          if(c==='"' && n === '"'){ field+='"'; i++; }
+          else if(c === '"'){ q=false; }
+          else { field+=c; }
+        }else{
+          if(c === '"'){ q = true; }
+          else if(c === ','){ row.push(field); field=""; }
+          else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+          else if(c === '\r'){ /* ignore */ }
           else { field += c; }
         }
       }
-      if (field.length || row.length) { row.push(field); rows.push(row); }
-      const header = rows.shift() ?? [];
-      return rows.map(r => Object.fromEntries(header.map((h,idx)=>[h, r[idx] ?? ""])));
+      if(field.length || row.length){ row.push(field); rows.push(row); }
+      const header = rows.shift() || [];
+      return rows.map(r => Object.fromEntries(header.map((h,i)=>[h, r[i] ?? ""])));
     }
 
-    // ---- Fetch & prepare data ----
-    let DATA = [];
-    let currentBook = "", currentChapter = "", currentVerse = "";
-
+    // ---- Load data ----
     async function loadData() {
       const res = await fetch("verses.csv", { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to load verses.csv");
+      if (!res.ok) { alert("verses.csv not found"); return; }
       const raw = await res.text();
       const rows = parseCSV(raw);
 
-      // Derive Book/Chapter/Verse from Title if needed, normalize, and sort
-      for (const row of rows) {
-        const t = normalizeText(row["Title"]);
-        if (t && t.includes(":")) {
-          const [left, v] = t.split(":").map(normalizeText);
-          const leftParts = left.split(" ");
+      // Normalize & fill Book/Chapter/Verse from Title if missing
+      for (const r of rows){
+        const t = normalizeText(r.Title);
+        if (t && t.includes(":")){
+          const [left, v] = t.split(":");
+          const leftParts = normalizeText(left).split(" ");
           const ch = leftParts.pop() ?? "";
-          const b = leftParts.join(" ");
-          row.Book = normalizeText(row.Book || b);
-          row.Chapter = normalizeText(row.Chapter || ch);
-          row.Verse = normalizeText(row.Verse || v);
+          const b  = leftParts.join(" ");
+          r.Book    = normalizeText(r.Book || b);
+          r.Chapter = normalizeText(r.Chapter || ch);
+          r.Verse   = normalizeText(r.Verse || v);
         } else {
-          row.Book = normalizeText(row.Book);
-          row.Chapter = normalizeText(row.Chapter);
-          row.Verse = normalizeText(row.Verse);
+          r.Book    = normalizeText(r.Book);
+          r.Chapter = normalizeText(r.Chapter);
+          r.Verse   = normalizeText(r.Verse);
         }
-        row.Text = row.Text ?? "";
+        r.Text = r.Text ?? "";
       }
-
-      DATA = rows
-        .filter(r => r.Book && r.Chapter && r.Verse)
-        .sort((a,b) => {
-          const ai = bookOrder.get(a.Book) ?? 9999;
-          const bi = bookOrder.get(b.Book) ?? 9999;
-          if (ai !== bi) return ai - bi;
-          const ac = safeInt(a.Chapter), bc = safeInt(b.Chapter);
-          if (ac !== bc) return ac - bc;
-          return safeInt(a.Verse) - safeInt(b.Verse);
-        });
+      ALL_ROWS = rows.filter(r => r.Book && r.Chapter && r.Verse);
 
       renderBooks();
     }
 
-    // ---- UI: Books, Chapters, Verses ----
+    // ---- Render Books / Chapters / Verses ----
     const booksEl = document.getElementById("books");
     const chaptersEl = document.getElementById("chapters");
     const versesEl = document.getElementById("verses");
-    const ntMarker = document.getElementById("ntMarker");
 
-    function uniqueOrdered(arr) {
-      const seen = new Set(); const out = [];
-      for (const x of arr) if (!seen.has(x)) { seen.add(x); out.push(x); }
-      return out;
+    function renderBooks(){
+      booksEl.innerHTML = "";
+      BOOKS.forEach(name => {
+        if (name === "****"){
+          const hr = document.createElement("div");
+          hr.className = "divider";
+          booksEl.appendChild(hr);
+        } else {
+          const b = document.createElement("button");
+          b.className = "btn";
+          b.textContent = name;
+          b.onclick = () => selectBook(name);
+          booksEl.appendChild(b);
+        }
+      });
     }
 
-    function renderBooks() {
-      booksEl.innerHTML = "";
-      let sawNT = false;
-      BOOKS.forEach((name, idx) => {
-        if (name === "****") {
-          const div = document.createElement("div");
-          div.className = "divider";
-          booksEl.appendChild(div);
-          if (!sawNT && idx > 0) { sawNT = true; ntMarker.style.display = "block"; }
-          return;
-        }
+    function selectBook(book){
+      currentBook = book;
+      currentChapter = "";
+      // Chapters from rows of this book; sort numerically to look tidy like screenshot
+      const chapters = unique(
+        ALL_ROWS.filter(r => normalizeText(r.Book) === normalizeText(book))
+                .map(r => r.Chapter)
+      ).sort((a,b)=> num(a)-num(b));
+
+      chaptersEl.innerHTML = "";
+      versesEl.innerHTML = "";
+      for (const ch of chapters){
+        if(!ch) continue;
         const btn = document.createElement("button");
         btn.className = "btn";
-        btn.textContent = name;
-        btn.onclick = () => selectBook(name);
-        booksEl.appendChild(btn);
-      });
+        btn.textContent = ch;
+        btn.onclick = () => selectChapter(ch);
+        chaptersEl.appendChild(btn);
+      }
     }
 
-    function selectBook(book) {
-      currentBook = book; currentChapter = ""; currentVerse = "";
-      chaptersEl.innerHTML = ""; versesEl.innerHTML = "";
-
-      const chapters = uniqueOrdered(
-        DATA.filter(r => normalizeText(r.Book) === normalizeText(book))
-            .map(r => normalizeText(r.Chapter))
-            .filter(Boolean)
-      );
-      chapters.forEach(ch => {
-        const b = document.createElement("button");
-        b.className = "btn";
-        b.textContent = ch;
-        b.onclick = () => selectChapter(ch);
-        chaptersEl.appendChild(b);
-      });
-    }
-
-    function selectChapter(chapter) {
-      currentChapter = chapter; currentVerse = "";
-      versesEl.innerHTML = "";
-
-      const verses = uniqueOrdered(
-        DATA.filter(r =>
+    function selectChapter(chapter){
+      currentChapter = chapter;
+      const verses = unique(
+        ALL_ROWS.filter(r =>
           normalizeText(r.Book) === normalizeText(currentBook) &&
           normalizeText(r.Chapter) === normalizeText(chapter)
-        ).map(r => normalizeText(r.Verse)).filter(Boolean)
-      );
-      verses.forEach(v => {
-        const b = document.createElement("button");
-        b.className = "btn";
-        b.textContent = v;
-        b.onclick = () => openPresentation(currentBook, currentChapter, v);
-        versesEl.appendChild(b);
-      });
+        ).map(r => r.Verse)
+      ).sort((a,b)=> num(a)-num(b));
+
+      versesEl.innerHTML = "";
+      for (const v of verses){
+        if(!v) continue;
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = v;
+        btn.onclick = () => openPresentation(currentBook, currentChapter, v);
+        versesEl.appendChild(btn);
+      }
     }
 
-    function openPresentation(book, chapter, verse) {
-      currentVerse = verse;
+    function openPresentation(book, chapter, verse){
       const url = new URL("presentation.html", location.href);
       url.searchParams.set("book", book);
       url.searchParams.set("chapter", chapter);
@@ -269,11 +262,7 @@
       window.open(url.toString(), "_blank", "noopener,noreferrer");
     }
 
-    // Init
-    loadData().catch(err => {
-      console.error(err);
-      alert("Failed to load verses. Please ensure verses.csv is in the same folder.");
-    });
+    loadData();
   </script>
 </body>
 </html>
